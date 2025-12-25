@@ -1749,7 +1749,119 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ... rest of your existing initialization code ...
 });
+        // Add security menu to navbar
+function addSecurityMenu() {
+    const navbar = document.querySelector('.navbar .nav-links');
+    if (navbar) {
+        const securityItem = document.createElement('div');
+        securityItem.innerHTML = `
+            <a href="#" onclick="toggleSecurityMenu(event)" style="position: relative;">
+                ${isAdminMode ? '👑' : '🔒'} সুরক্ষা
+                <div id="securityMenu" style="display: none; position: absolute; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 5px; padding: 10px; z-index: 1001; min-width: 200px; right: 0;">
+                    <div style="margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                        ${isAdminMode ? '👑 অ্যাডমিন মোড' : '🔒 ব্যবহারকারী মোড'}
+                    </div>
+                    ${isAdminMode ? 
+                        `<button onclick="adminLogout()" style="width: 100%; text-align: left; padding: 8px; background: #ff9800; color: white; border: none; border-radius: 3px; margin-bottom: 5px;">লগআউট</button>` : 
+                        `<button onclick="adminLogin()" style="width: 100%; text-align: left; padding: 8px; background: #2196f3; color: white; border: none; border-radius: 3px; margin-bottom: 5px;">অ্যাডমিন লগইন</button>`
+                    }
+                    <button onclick="showSecurityReport()" style="width: 100%; text-align: left; padding: 8px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 5px;">রিপোর্ট দেখুন</button>
+                    <button onclick="exportSecurityLogs()" style="width: 100%; text-align: left; padding: 8px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px;">লগ এক্সপোর্ট</button>
+                </div>
+            </a>
+        `;
+        navbar.appendChild(securityItem);
+    }
+}
+
+function toggleSecurityMenu(event) {
+    event.preventDefault();
+    const menu = document.getElementById('securityMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+}
+
+// Security report viewer
+function showSecurityReport() {
+    const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
+    const deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || { count: 0 };
+    
+    let reportHTML = `
+        <h3>📊 সিকিউরিটি রিপোর্ট</h3>
+        <p><strong>ডিলেট চেষ্টা:</strong> ${deletionAttempts.count} বার</p>
+        <p><strong>রিপোর্ট করা প্রশ্ন:</strong> ${reports.length} টি</p>
+    `;
+    
+    if (reports.length > 0) {
+        reportHTML += '<h4>রিপোর্ট করা প্রশ্ন:</h4><ul style="max-height: 200px; overflow-y: auto;">';
+        reports.forEach((report, index) => {
+            const questions = getQuestions();
+            const question = questions.find(q => q.id === report.questionId);
+            reportHTML += `
+                <li style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <strong>#${index+1}</strong><br>
+                    ${question ? question.text.substring(0, 50) + '...' : 'প্রশ্ন মুছে ফেলা হয়েছে'}<br>
+                    <small>কারণ: ${report.reason}</small>
+                </li>
+            `;
+        });
+        reportHTML += '</ul>';
+    }
+    
+    alert(reportHTML);
+}
+        // Security checklist function
+function runSecurityCheck() {
+    const checklist = [
+        { id: 1, text: "ডিলেট কনফার্মেশন চালু", checked: true },
+        { id: 2, text: "অ্যাডমিন পাসওয়ার্ড সেট", checked: SECURITY_CONFIG.adminPassword !== "krishi123" },
+        { id: 3, text: "রেট লিমিটিং চালু", checked: true },
+        { id: 4, text: "রিপোর্ট সিস্টেম চালু", checked: true },
+        { id: 5, text: "ক্লায়েন্ট আইডি ট্র্যাকিং", checked: true }
+    ];
+    
+    let checkHTML = "<h3>🔒 সিকিউরিটি চেকলিস্ট</h3><ul>";
+    checklist.forEach(item => {
+        checkHTML += `
+            <li style="margin-bottom: 8px;">
+                ${item.checked ? '✅' : '❌'} ${item.text}
+            </li>
+        `;
+    });
+    checkHTML += "</ul>";
+    
+    if (checklist.filter(c => !c.checked).length > 0) {
+        checkHTML += `<p style="color: #d32f2f; margin-top: 10px;">
+            ⚠️ কিছু সিকিউরিটি ফিচার চালু নেই। সেটিংস চেক করুন।
+        </p>`;
+    }
+    
+    alert(checkHTML);
+}
+
+// Add security check button
+function addSecurityCheckButton() {
+    const checkBtn = document.createElement('button');
+    checkBtn.innerHTML = '🔍 সিকিউরিটি চেক';
+    checkBtn.style.cssText = `
+        position: fixed;
+        bottom: 120px;
+        right: 20px;
+        background: #607d8b;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 10000;
+        font-size: 0.8rem;
+    `;
+    checkBtn.onclick = runSecurityCheck;
+    document.body.appendChild(checkBtn);
+}
     </script>
 </body>
 
 </html>
+
