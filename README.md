@@ -7,4 +7,4 @@
 ✅ কৃষি ক্যালেন্ডার
 ✅ রোগ-বালাই নির্ণয়
 ## ব্যবহার করুন
-লাইভ ডেমো: https://yourusername.github.io/muktokrishi/
+লাইভ ডেমো: https://ikramameen2024.github.io/Muktokrishi/
