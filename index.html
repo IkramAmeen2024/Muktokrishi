@@ -1396,7 +1396,7 @@ function resetDeletionAttempts() {
 
 // Admin login
 function adminLogin() {
-    const password = prompt("অ্যাডমিন পাসওয়ার্ড দিন:");
+    const password = prompt("অ্যাডমিন পাসওয়ার্ড দিন: 2025");
     if (password === SECURITY_CONFIG.adminPassword) {
         isAdminMode = true;
         localStorage.setItem('isAdminMode', 'true');
@@ -1864,4 +1864,5 @@ function addSecurityCheckButton() {
 </body>
 
 </html>
+
 
