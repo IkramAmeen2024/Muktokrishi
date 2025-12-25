@@ -1336,33 +1336,11 @@
 const SECURITY_CONFIG = {
     deleteProtection: true,
     confirmBeforeDelete: true,
-    deleteDelay: 3000,
+    deleteDelay: 3000, // 3 seconds delay before actual delete
     maxQuestionsPerDay: 50,
     requireAdminForMassDelete: true,
-    adminPassword: "2026"
+    adminPassword: "2026" // Change this password
 };
-
-// Track deletion attempts
-let deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || {
-    count: 0,
-    lastAttempt: null,
-    blockedUntil: null
-};
-
-// Admin state
-let isAdminMode = localStorage.getItem('isAdminMode') === 'true';
-
-// ==================== SECURITY SETTINGS ====================
-const SECURITY_CONFIG = {
-    deleteProtection: true,
-    confirmBeforeDelete: true,
-    deleteDelay: 3000,
-    maxQuestionsPerDay: 50,
-    requireAdminForMassDelete: true,
-    requireAdminForAnswerDelete: true, // নতুন সেটিং
-    adminPassword: "2026"
-};
-
 // Track deletion attempts
 let deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || {
     count: 0,
@@ -1377,15 +1355,17 @@ let isAdminMode = localStorage.getItem('isAdminMode') === 'true';
 
 // Check if user can delete
 function canUserDelete() {
+    // Check if blocked
     if (deletionAttempts.blockedUntil && new Date() < new Date(deletionAttempts.blockedUntil)) {
         const remainingTime = Math.ceil((new Date(deletionAttempts.blockedUntil) - new Date()) / 1000 / 60);
         alert(`🚫 খুব বেশি বার ডিলেট চেষ্টা করেছেন। ${remainingTime} মিনিট পরে আবার চেষ্টা করুন।`);
         return false;
     }
     
+    // Check rate limiting (max 10 deletions per hour)
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
     if (deletionAttempts.count > 10 && new Date(deletionAttempts.lastAttempt) > hourAgo) {
-        deletionAttempts.blockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+        deletionAttempts.blockedUntil = new Date(Date.now() + 30 * 60 * 1000); // Block for 30 minutes
         localStorage.setItem('deletion_attempts', JSON.stringify(deletionAttempts));
         alert("🚫 ১ ঘণ্টায় ১০টির বেশি প্রশ্ন ডিলেট করা যাবে না। ৩০ মিনিট পর আবার চেষ্টা করুন।");
         return false;
@@ -1420,11 +1400,8 @@ function adminLogin() {
         isAdminMode = true;
         localStorage.setItem('isAdminMode', 'true');
         alert("✅ অ্যাডমিন মোড চালু হয়েছে!");
-        displayQuestions();
+        displayQuestions(); // Refresh to show delete buttons
         updateAdminPanel();
-        updateSecurityMenu();
-        showSecurityNotice();
-        createSecurityButton(); // বাটন আবার তৈরি করবে
     } else {
         alert("❌ ভুল পাসওয়ার্ড!");
     }
@@ -1435,11 +1412,8 @@ function adminLogout() {
     isAdminMode = false;
     localStorage.removeItem('isAdminMode');
     alert("✅ অ্যাডমিন মোড বন্ধ হয়েছে!");
-    displayQuestions();
+    displayQuestions(); // Refresh to hide delete buttons
     updateAdminPanel();
-    updateSecurityMenu();
-    removeSecurityNotice();
-    removeSecurityButton(); // বাটন সরিয়ে ফেলবে
 }
 
 // Update admin panel UI
@@ -1456,7 +1430,7 @@ function updateAdminPanel() {
             <button onclick="backupData()" title="ডেটা ব্যাকআপ">📥 ব্যাকআপ</button>
             <button onclick="document.getElementById('restoreFile').click()" title="ডেটা রিস্টোর">📤 রিস্টোর</button>
             ${isAdminMode ? '<button onclick="clearAllData()" class="clear-btn" title="সব ডেটা মুছুন">🗑️ ক্লিয়ার</button>' : ''}
-            <input type="file" id="restoreFile" accept=".json" style="display: none;" onchange="restoreData(event)">
+            <input type="file" id="restoreFile" accept=".json" style="display: none;">
         `;
     }
 }
@@ -1465,11 +1439,13 @@ function updateAdminPanel() {
 function deleteSingleQuestion(questionId) {
     if (!canUserDelete()) return;
     
+    // Get question details
     const questions = getQuestions();
     const question = questions.find(q => q.id === questionId);
     
     if (!question) return;
     
+    // Show confirmation with question preview
     const questionPreview = question.text.length > 50 ? 
         question.text.substring(0, 50) + "..." : question.text;
     
@@ -1483,6 +1459,7 @@ function deleteSingleQuestion(questionId) {
     
     if (!confirm(confirmMessage)) return;
     
+    // Additional protection: Type verification text
     const verificationText = "ডিলেট";
     const userInput = prompt(`ডিলেট নিশ্চিত করতে "${verificationText}" লিখুন:`);
     
@@ -1491,77 +1468,23 @@ function deleteSingleQuestion(questionId) {
         return;
     }
     
+    // Final confirmation
     if (!confirm("🚨 সর্বশেষ সতর্কতা: আপনি কি নিশ্চিত?")) return;
     
+    // Track the attempt
     trackDeletionAttempt();
     
+    // Perform deletion
     const result = deleteQuestion(questionId);
     alert(result.message);
     
+    // Show remaining questions
     const remaining = getQuestions().length;
     setTimeout(() => {
         alert(`ℹ️ মোট প্রশ্ন আছে: ${remaining}টি`);
     }, 500);
     
     displayQuestions();
-}
-
-// নতুন ফাংশন: উত্তর ডিলেট করা (শুধু অ্যাডমিন)
-function deleteAnswer(questionId) {
-    if (!isAdminMode) {
-        alert("🚫 শুধুমাত্র অ্যাডমিন উত্তর ডিলেট করতে পারেন!");
-        return;
-    }
-    
-    const questions = getQuestions();
-    const questionIndex = questions.findIndex(q => q.id === questionId);
-    
-    if (questionIndex === -1) {
-        alert("❌ প্রশ্ন পাওয়া যায়নি!");
-        return;
-    }
-    
-    const question = questions[questionIndex];
-    
-    if (!question.answer) {
-        alert("⚠️ এই প্রশ্নের কোনো উত্তর নেই!");
-        return;
-    }
-    
-    const confirmMessage = `
-আপনি কি এই উত্তরটি ডিলেট করতে চান?
-
-প্রশ্ন: "${question.text.substring(0, 50)}${question.text.length > 50 ? '...' : ''}"
-
-উত্তর: "${question.answer.substring(0, 50)}${question.answer.length > 50 ? '...' : ''}"
-
-⚠️ সতর্কতা: উত্তর ডিলেট করলে এটি চিরতরে মুছে যাবে!
-    `.trim();
-    
-    if (!confirm(confirmMessage)) return;
-    
-    const verificationText = "উত্তর ডিলেট";
-    const userInput = prompt(`ডিলেট নিশ্চিত করতে "${verificationText}" লিখুন:`);
-    
-    if (userInput !== verificationText) {
-        alert("❌ ভেরিফিকেশন ব্যর্থ! ডিলেট বাতিল করা হয়েছে।");
-        return;
-    }
-    
-    // উত্তর মুছে ফেলা
-    questions[questionIndex].answer = null;
-    questions[questionIndex].answeredBy = null;
-    questions[questionIndex].status = "pending";
-    questions[questionIndex].answerTimestamp = null;
-    
-    // আপডেট সংরক্ষণ
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
-    
-    alert("✅ উত্তর সফলভাবে ডিলেট করা হয়েছে!");
-    displayQuestions();
-    
-    // ডিলেট ট্র্যাক করা
-    trackDeletionAttempt();
 }
 
 // Bulk delete protection
@@ -1582,6 +1505,7 @@ function deleteMultipleQuestions(questionIds) {
         return;
     }
     
+    // Delay before actual deletion
     setTimeout(() => {
         let deleted = 0;
         questionIds.forEach(id => {
@@ -1608,6 +1532,7 @@ function clearAllData() {
         return;
     }
     
+    // Show preview of what will be deleted
     let preview = "নিচের প্রশ্নগুলো মুছে যাবে:\n\n";
     questions.slice(0, 3).forEach((q, i) => {
         preview += `${i+1}. ${q.text.substring(0, 40)}...\n`;
@@ -1616,6 +1541,7 @@ function clearAllData() {
     
     if (!confirm(preview + "\n\n❌ আপনি কি নিশ্চিত?")) return;
     
+    // Type verification
     const verificationCode = Math.random().toString(36).substring(2, 6).toUpperCase();
     const userInput = prompt(`নিশ্চিত করতে "${verificationCode}" লিখুন:`);
     
@@ -1624,6 +1550,7 @@ function clearAllData() {
         return;
     }
     
+    // Final warning
     if (!confirm("🚨 এটি চিরতরে সব ডেটা মুছে ফেলবে! শেষ সতর্কতা:")) return;
     
     localStorage.removeItem(STORAGE_KEY);
@@ -1631,353 +1558,9 @@ function clearAllData() {
     displayQuestions();
 }
 
-// Report question function
-function reportQuestion(questionId) {
-    const reason = prompt("রিপোর্টের কারণ লিখুন (স্প্যাম, অপপ্রয়োগ, অশ্লীলতা ইত্যাদি):");
-    if (reason) {
-        const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
-        reports.push({
-            questionId,
-            reason,
-            timestamp: new Date().toISOString()
-        });
-        localStorage.setItem('question_reports', JSON.stringify(reports));
-        alert("✅ রিপোর্ট জমা হয়েছে! অ্যাডমিন পর্যালোচনা করবেন।");
-    }
-}
+// ==================== MODIFIED DISPLAY FUNCTION ====================
 
-// Security report viewer
-function showSecurityReport() {
-    if (!isAdminMode) {
-        alert("🚫 শুধুমাত্র অ্যাডমিন সিকিউরিটি রিপোর্ট দেখতে পারেন!");
-        return;
-    }
-    
-    const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
-    const deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || { count: 0 };
-    
-    let reportHTML = `
-        <h3>📊 সিকিউরিটি রিপোর্ট</h3>
-        <p><strong>ডিলেট চেষ্টা:</strong> ${deletionAttempts.count} বার</p>
-        <p><strong>রিপোর্ট করা প্রশ্ন:</strong> ${reports.length} টি</p>
-    `;
-    
-    if (reports.length > 0) {
-        reportHTML += '<h4>রিপোর্ট করা প্রশ্ন:</h4><ul style="max-height: 200px; overflow-y: auto;">';
-        reports.forEach((report, index) => {
-            const questions = getQuestions();
-            const question = questions.find(q => q.id === report.questionId);
-            reportHTML += `
-                <li style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
-                    <strong>#${index+1}</strong><br>
-                    ${question ? question.text.substring(0, 50) + '...' : 'প্রশ্ন মুছে ফেলা হয়েছে'}<br>
-                    <small>কারণ: ${report.reason}</small>
-                </li>
-            `;
-        });
-        reportHTML += '</ul>';
-    }
-    
-    // Create a modal for better display
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.3);
-        z-index: 10000;
-        max-width: 90%;
-        max-height: 80%;
-        overflow-y: auto;
-    `;
-    
-    modal.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0;">🔒 সিকিউরিটি রিপোর্ট</h3>
-            <button onclick="this.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">✕</button>
-        </div>
-        ${reportHTML}
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
-            <button onclick="clearSecurityReports()" style="background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">রিপোর্ট ক্লিয়ার করুন</button>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-}
-
-// Clear security reports
-function clearSecurityReports() {
-    if (!isAdminMode) {
-        alert("🚫 শুধুমাত্র অ্যাডমিন রিপোর্ট ক্লিয়ার করতে পারেন!");
-        return;
-    }
-    
-    if (confirm("🚨 সব সিকিউরিটি রিপোর্ট মুছে ফেলবেন?")) {
-        localStorage.removeItem('question_reports');
-        alert("✅ রিপোর্ট ক্লিয়ার করা হয়েছে!");
-        showSecurityReport();
-    }
-}
-
-// Security checklist function
-function runSecurityCheck() {
-    if (!isAdminMode) {
-        alert("🚫 শুধুমাত্র অ্যাডমিন সিকিউরিটি চেক করতে পারেন!");
-        return;
-    }
-    
-    const checklist = [
-        { id: 1, text: "ডিলেট কনফার্মেশন চালু", checked: SECURITY_CONFIG.confirmBeforeDelete },
-        { id: 2, text: "অ্যাডমিন পাসওয়ার্ড সেট", checked: SECURITY_CONFIG.adminPassword !== "2026" },
-        { id: 3, text: "রেট লিমিটিং চালু", checked: true },
-        { id: 4, text: "রিপোর্ট সিস্টেম চালু", checked: true },
-        { id: 5, text: "উত্তর ডিলেট প্রোটেকশন", checked: SECURITY_CONFIG.requireAdminForAnswerDelete },
-        { id: 6, text: "মাস ডিলেট প্রোটেকশন", checked: SECURITY_CONFIG.requireAdminForMassDelete }
-    ];
-    
-    let checkHTML = "<h3>🔒 সিকিউরিটি চেকলিস্ট</h3><ul>";
-    checklist.forEach(item => {
-        checkHTML += `
-            <li style="margin-bottom: 8px; display: flex; align-items: center;">
-                ${item.checked ? '✅' : '❌'} 
-                <span style="margin-left: 10px;">${item.text}</span>
-            </li>
-        `;
-    });
-    checkHTML += "</ul>";
-    
-    // Calculate security score
-    const totalChecks = checklist.length;
-    const passedChecks = checklist.filter(c => c.checked).length;
-    const securityScore = Math.round((passedChecks / totalChecks) * 100);
-    
-    checkHTML += `
-        <div style="margin-top: 15px; padding: 15px; background: ${securityScore > 80 ? '#d4edda' : securityScore > 60 ? '#fff3cd' : '#f8d7da'}; border-radius: 5px;">
-            <strong>সিকিউরিটি স্কোর: ${securityScore}%</strong>
-            <p>${securityScore > 80 ? '👍 ভালো সুরক্ষা' : securityScore > 60 ? '⚠️ মাঝারি সুরক্ষা' : '👎 দুর্বল সুরক্ষা'}</p>
-        </div>
-    `;
-    
-    if (checklist.filter(c => !c.checked).length > 0) {
-        checkHTML += `<p style="color: #d32f2f; margin-top: 10px;">
-            ⚠️ কিছু সিকিউরিটি ফিচার চালু নেই। সেটিংস চেক করুন।
-        </p>`;
-    }
-    
-    // Create modal for checklist
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.3);
-        z-index: 10000;
-        max-width: 90%;
-        max-height: 80%;
-        overflow-y: auto;
-    `;
-    
-    modal.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0;">🔍 সিকিউরিটি চেক</h3>
-            <button onclick="this.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">✕</button>
-        </div>
-        ${checkHTML}
-    `;
-    
-    document.body.appendChild(modal);
-}
-
-// Create security button (শুধু অ্যাডমিন মোডে দেখাবে)
-function createSecurityButton() {
-    // Remove existing button if any
-    removeSecurityButton();
-    
-    // Only create button if in admin mode
-    if (!isAdminMode) return;
-    
-    const checkBtn = document.createElement('button');
-    checkBtn.id = 'securityCheckBtn';
-    checkBtn.innerHTML = '👑 সিকিউরিটি';
-    checkBtn.style.cssText = `
-        position: fixed;
-        bottom: 120px;
-        right: 20px;
-        background: #ff9800;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 50px;
-        cursor: pointer;
-        z-index: 10000;
-        font-size: 0.9rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-    `;
-    
-    checkBtn.onmouseover = function() {
-        this.style.transform = 'scale(1.1)';
-        this.style.boxShadow = '0 6px 15px rgba(0,0,0,0.3)';
-    };
-    
-    checkBtn.onmouseout = function() {
-        this.style.transform = 'scale(1)';
-        this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-    };
-    
-    // Single click for checklist
-    checkBtn.onclick = function(e) {
-        e.stopPropagation();
-        runSecurityCheck();
-    };
-    
-    // Right click for security report
-    checkBtn.oncontextmenu = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showSecurityReport();
-        return false;
-    };
-    
-    document.body.appendChild(checkBtn);
-    
-    // Add hint tooltip
-    setTimeout(() => {
-        const tooltip = document.createElement('div');
-        tooltip.innerHTML = 'বাম ক্লিক: চেকলিস্ট | ডান ক্লিক: রিপোর্ট';
-        tooltip.style.cssText = `
-            position: fixed;
-            bottom: 160px;
-            right: 20px;
-            background: #333;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            z-index: 10001;
-            animation: fadeOut 5s forwards;
-        `;
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeOut {
-                0% { opacity: 1; }
-                70% { opacity: 1; }
-                100% { opacity: 0; display: none; }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        document.body.appendChild(tooltip);
-        
-        setTimeout(() => tooltip.remove(), 5000);
-    }, 1000);
-}
-
-// Remove security button
-function removeSecurityButton() {
-    const existingBtn = document.querySelector('#securityCheckBtn');
-    if (existingBtn) existingBtn.remove();
-}
-
-// Update security menu in navbar
-function updateSecurityMenu() {
-    // Remove existing security menu
-    const existingMenu = document.querySelector('#securityMenuItem');
-    if (existingMenu) existingMenu.remove();
-    
-    const navbar = document.querySelector('.navbar .nav-links');
-    if (navbar) {
-        const securityItem = document.createElement('div');
-        securityItem.id = 'securityMenuItem';
-        securityItem.innerHTML = `
-            <a href="#" onclick="toggleSecurityMenu(event)" style="position: relative; display: flex; align-items: center; gap: 5px;">
-                ${isAdminMode ? '👑' : '🔒'} 
-                <span>সুরক্ষা</span>
-                <div id="securityMenu" style="display: none; position: absolute; top: 100%; right: 0; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 5px; padding: 10px; z-index: 1001; min-width: 200px; margin-top: 5px;">
-                    <div style="margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 5px; color: ${isAdminMode ? '#ff9800' : '#2196f3'}">
-                        ${isAdminMode ? '👑 অ্যাডমিন মোড' : '🔒 ব্যবহারকারী মোড'}
-                    </div>
-                    ${isAdminMode ? 
-                        `<button onclick="adminLogout()" style="width: 100%; text-align: left; padding: 8px 12px; background: #ff9800; color: white; border: none; border-radius: 3px; margin-bottom: 5px; cursor: pointer;">👑 লগআউট</button>` : 
-                        `<button onclick="adminLogin()" style="width: 100%; text-align: left; padding: 8px 12px; background: #2196f3; color: white; border: none; border-radius: 3px; margin-bottom: 5px; cursor: pointer;">🔒 অ্যাডমিন লগইন</button>`
-                    }
-                    ${isAdminMode ? `
-                        <button onclick="showSecurityReport()" style="width: 100%; text-align: left; padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 5px; cursor: pointer;">📊 রিপোর্ট দেখুন</button>
-                        <button onclick="runSecurityCheck()" style="width: 100%; text-align: left; padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; cursor: pointer;">🔍 সিকিউরিটি চেক</button>
-                    ` : ''}
-                </div>
-            </a>
-        `;
-        navbar.appendChild(securityItem);
-    }
-}
-
-function toggleSecurityMenu(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    const menu = document.getElementById('securityMenu');
-    if (menu) {
-        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-    }
-}
-
-// Close menu when clicking outside
-document.addEventListener('click', function(event) {
-    const menu = document.getElementById('securityMenu');
-    if (menu && menu.style.display === 'block') {
-        if (!event.target.closest('#securityMenuItem')) {
-            menu.style.display = 'none';
-        }
-    }
-});
-
-// Show security notice
-function showSecurityNotice() {
-    removeSecurityNotice();
-    
-    const securityNotice = document.createElement('div');
-    securityNotice.id = 'securityNotice';
-    securityNotice.style.cssText = `
-        position: fixed;
-        top: 70px;
-        right: 20px;
-        background: #fff3cd;
-        border: 1px solid #ffecb5;
-        border-radius: 5px;
-        padding: 10px 15px;
-        font-size: 0.8rem;
-        max-width: 250px;
-        z-index: 9999;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        animation: slideIn 0.5s ease;
-    `;
-    
-    securityNotice.innerHTML = `
-        <strong>👑 অ্যাডমিন মোড চালু</strong><br>
-        <small>আপনি প্রশ্ন ডিলেট, উত্তর ডিলেট এবং সব ডেটা ম্যানেজ করতে পারেন।</small>
-        <button onclick="removeSecurityNotice()" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 12px; cursor: pointer;">✕</button>
-    `;
-    
-    document.body.appendChild(securityNotice);
-}
-
-function removeSecurityNotice() {
-    const notice = document.getElementById('securityNotice');
-    if (notice) notice.remove();
-}
-
-// ==================== DISPLAY QUESTIONS UPDATED ====================
-
-// Modified displayQuestions function with answer delete option
+// Modified displayQuestions function with security
 function displayQuestions() {
     const questions = getQuestions();
     const container = document.getElementById('questionsList');
@@ -2027,21 +1610,12 @@ function displayQuestions() {
             </div>
             
             ${question.answer ? 
-                `<div style="position: relative;">
-                    <p style="margin: 10px 0; padding: 10px; background: #e8f5e9; border-radius: 5px;">
-                        <strong>উত্তর:</strong> ${question.answer}
-                        ${isAdminMode ? 
-                            `<button onclick="deleteAnswer(${question.id})" 
-                                     style="position: absolute; top: 5px; right: 5px; background: #f44336; color: white; border: none; padding: 3px 8px; border-radius: 3px; font-size: 0.8em; cursor: pointer;">
-                                🗑️ উত্তর মুছুন
-                            </button>` 
-                            : ''}
-                    </p>
-                    <small style="color: #666;">
-                        <strong>উত্তর দিয়েছেন:</strong> ${question.answeredBy || 'কৃষি বিশেষজ্ঞ'}
-                    </small><br>
-                </div>` 
-                : 
+                `<p style="margin: 10px 0; padding: 10px; background: #e8f5e9; border-radius: 5px;">
+                    <strong>উত্তর:</strong> ${question.answer}
+                </p>
+                <small style="color: #666;">
+                    <strong>উত্তর দিয়েছেন:</strong> ${question.answeredBy || 'কৃষি বিশেষজ্ঞ'}
+                </small><br>` : 
                 `<p style="margin: 10px 0; color: #ff9800; font-style: italic;">
                     আপনার প্রশ্নটি পর্যালোচনাধীন। শীঘ্রই উত্তর পাবেন।
                 </p>`
@@ -2061,20 +1635,14 @@ function displayQuestions() {
                 </button>
                 ` : ''}
                 
-                <!-- Delete button only shows in admin mode -->
-                ${isAdminMode ? `
-                <button onclick="deleteSingleQuestion(${question.id})" class="delete-btn" title="প্রশ্ন মুছুন">
-                    🗑️ প্রশ্ন মুছুন
-                </button>
-                ` : ''}
-                
-                ${!isAdminMode && diffHours < 1 ? `
+                <!-- Delete button only shows in admin mode or for very old questions -->
+                ${isAdminMode || diffHours < 1 ? `
                 <button onclick="deleteSingleQuestion(${question.id})" class="delete-btn" title="প্রশ্ন মুছুন">
                     🗑️ মুছুন
                 </button>
                 ` : ''}
                 
-                ${!isAdminMode && diffHours >= 1 ? `
+                ${diffHours >= 1 && !isAdminMode ? `
                 <button onclick="reportQuestion(${question.id})" class="btn" style="background: #ff9800; padding: 5px 15px; font-size: 0.9em;">
                     ⚠️ রিপোর্ট করুন
                 </button>
@@ -2098,72 +1666,207 @@ function displayQuestions() {
     });
 }
 
-// Initialize security features
-function initSecurity() {
-    resetDeletionAttempts();
-    isAdminMode = localStorage.getItem('isAdminMode') === 'true';
-    
-    // Wait for DOM to be fully loaded
-    setTimeout(() => {
-        updateAdminPanel();
-        updateSecurityMenu();
-        createSecurityButton();
+// Report question function
+function reportQuestion(questionId) {
+    const reason = prompt("রিপোর্টের কারণ লিখুন (স্প্যাম, অপপ্রয়োগ, অশ্লীলতা ইত্যাদি):");
+    if (reason) {
+        // Store report in localStorage
+        const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
+        reports.push({
+            questionId,
+            reason,
+            timestamp: new Date().toISOString()
+        });
+        localStorage.setItem('question_reports', JSON.stringify(reports));
         
-        if (isAdminMode) {
-            showSecurityNotice();
-        } else {
-            // Show user notice after delay
-            setTimeout(() => {
-                const userNotice = document.createElement('div');
-                userNotice.style.cssText = `
-                    position: fixed;
-                    bottom: 80px;
-                    right: 20px;
-                    background: #d1ecf1;
-                    border: 1px solid #bee5eb;
-                    border-radius: 5px;
-                    padding: 10px 15px;
-                    font-size: 0.8rem;
-                    max-width: 250px;
-                    z-index: 9999;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    animation: slideIn 0.5s ease;
-                `;
-                userNotice.innerHTML = `
-                    <strong>🔒 সুরক্ষিত মোড</strong><br>
-                    <small>• প্রশ্ন ডিলেট করতে অ্যাডমিন লগইন করুন<br>• উত্তর ডিলেট শুধু অ্যাডমিনের জন্য</small>
-                    <button onclick="this.parentElement.remove()" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 12px; cursor: pointer;">✕</button>
-                `;
-                document.body.appendChild(userNotice);
-                
-                // Auto remove after 10 seconds
-                setTimeout(() => userNotice.remove(), 10000);
-            }, 3000);
-        }
-        
-        // Add CSS animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-        
-    }, 100);
+        alert("✅ রিপোর্ট জমা হয়েছে! অ্যাডমিন পর্যালোচনা করবেন।");
+    }
 }
 
-// Initialize when DOM is loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSecurity);
-} else {
-    initSecurity();
+// ==================== INITIALIZATION ====================
+
+// Add this to your existing initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Reset deletion attempts daily
+    resetDeletionAttempts();
+    
+    // Check admin mode
+    isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+    
+    // Update admin panel
+    updateAdminPanel();
+    
+    // Add security notice
+    const securityNotice = document.createElement('div');
+    securityNotice.style.cssText = `
+        position: fixed;
+        top: 70px;
+        right: 20px;
+        background: #fff3cd;
+        border: 1px solid #ffecb5;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 0.8rem;
+        max-width: 250px;
+        z-index: 9999;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: ${isAdminMode ? 'block' : 'none'};
+    `;
+    securityNotice.innerHTML = `
+        <strong>👑 অ্যাডমিন মোড</strong><br>
+        আপনি প্রশ্ন ডিলেট করতে পারেন।
+    `;
+    document.body.appendChild(securityNotice);
+    
+    // Show regular user notice
+    if (!isAdminMode) {
+        setTimeout(() => {
+            const userNotice = document.createElement('div');
+            userNotice.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                right: 20px;
+                background: #d1ecf1;
+                border: 1px solid #bee5eb;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 0.8rem;
+                max-width: 250px;
+                z-index: 9999;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            `;
+            userNotice.innerHTML = `
+                <strong>🔒 সুরক্ষিত</strong><br>
+                প্রশ্ন ডিলেট করতে অ্যাডমিন লগইন করুন।
+            `;
+            document.body.appendChild(userNotice);
+            
+            // Auto remove after 10 seconds
+            setTimeout(() => userNotice.remove(), 10000);
+        }, 5000);
+    }
+    
+    // ... rest of your existing initialization code ...
+});
+        // Add security menu to navbar
+function addSecurityMenu() {
+    const navbar = document.querySelector('.navbar .nav-links');
+    if (navbar) {
+        const securityItem = document.createElement('div');
+        securityItem.innerHTML = `
+            <a href="#" onclick="toggleSecurityMenu(event)" style="position: relative;">
+                ${isAdminMode ? '👑' : '🔒'} সুরক্ষা
+                <div id="securityMenu" style="display: none; position: absolute; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 5px; padding: 10px; z-index: 1001; min-width: 200px; right: 0;">
+                    <div style="margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                        ${isAdminMode ? '👑 অ্যাডমিন মোড' : '🔒 ব্যবহারকারী মোড'}
+                    </div>
+                    ${isAdminMode ? 
+                        `<button onclick="adminLogout()" style="width: 100%; text-align: left; padding: 8px; background: #ff9800; color: white; border: none; border-radius: 3px; margin-bottom: 5px;">লগআউট</button>` : 
+                        `<button onclick="adminLogin()" style="width: 100%; text-align: left; padding: 8px; background: #2196f3; color: white; border: none; border-radius: 3px; margin-bottom: 5px;">অ্যাডমিন লগইন</button>`
+                    }
+                    <button onclick="showSecurityReport()" style="width: 100%; text-align: left; padding: 8px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 5px;">রিপোর্ট দেখুন</button>
+                    <button onclick="exportSecurityLogs()" style="width: 100%; text-align: left; padding: 8px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px;">লগ এক্সপোর্ট</button>
+                </div>
+            </a>
+        `;
+        navbar.appendChild(securityItem);
+    }
+}
+
+function toggleSecurityMenu(event) {
+    event.preventDefault();
+    const menu = document.getElementById('securityMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+}
+
+// Security report viewer
+function showSecurityReport() {
+    const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
+    const deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || { count: 0 };
+    
+    let reportHTML = `
+        <h3>📊 সিকিউরিটি রিপোর্ট</h3>
+        <p><strong>ডিলেট চেষ্টা:</strong> ${deletionAttempts.count} বার</p>
+        <p><strong>রিপোর্ট করা প্রশ্ন:</strong> ${reports.length} টি</p>
+    `;
+    
+    if (reports.length > 0) {
+        reportHTML += '<h4>রিপোর্ট করা প্রশ্ন:</h4><ul style="max-height: 200px; overflow-y: auto;">';
+        reports.forEach((report, index) => {
+            const questions = getQuestions();
+            const question = questions.find(q => q.id === report.questionId);
+            reportHTML += `
+                <li style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <strong>#${index+1}</strong><br>
+                    ${question ? question.text.substring(0, 50) + '...' : 'প্রশ্ন মুছে ফেলা হয়েছে'}<br>
+                    <small>কারণ: ${report.reason}</small>
+                </li>
+            `;
+        });
+        reportHTML += '</ul>';
+    }
+    
+    alert(reportHTML);
+}
+        // Security checklist function
+function runSecurityCheck() {
+    const checklist = [
+        { id: 1, text: "ডিলেট কনফার্মেশন চালু", checked: true },
+        { id: 2, text: "অ্যাডমিন পাসওয়ার্ড সেট", checked: SECURITY_CONFIG.adminPassword !== "krishi123" },
+        { id: 3, text: "রেট লিমিটিং চালু", checked: true },
+        { id: 4, text: "রিপোর্ট সিস্টেম চালু", checked: true },
+        { id: 5, text: "ক্লায়েন্ট আইডি ট্র্যাকিং", checked: true }
+    ];
+    
+    let checkHTML = "<h3>🔒 সিকিউরিটি চেকলিস্ট</h3><ul>";
+    checklist.forEach(item => {
+        checkHTML += `
+            <li style="margin-bottom: 8px;">
+                ${item.checked ? '✅' : '❌'} ${item.text}
+            </li>
+        `;
+    });
+    checkHTML += "</ul>";
+    
+    if (checklist.filter(c => !c.checked).length > 0) {
+        checkHTML += `<p style="color: #d32f2f; margin-top: 10px;">
+            ⚠️ কিছু সিকিউরিটি ফিচার চালু নেই। সেটিংস চেক করুন।
+        </p>`;
+    }
+    
+    alert(checkHTML);
+}
+
+// Add security check button
+function addSecurityCheckButton() {
+    const checkBtn = document.createElement('button');
+    checkBtn.innerHTML = '🔍 সিকিউরিটি চেক';
+    checkBtn.style.cssText = `
+        position: fixed;
+        bottom: 120px;
+        right: 20px;
+        background: #607d8b;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 10000;
+        font-size: 0.8rem;
+    `;
+    checkBtn.onclick = runSecurityCheck;
+    document.body.appendChild(checkBtn);
 }
     </script>
 </body>
 
+    </script>
+</body>
+
 </html>
+
 
 
 
