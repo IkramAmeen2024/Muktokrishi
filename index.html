@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মুক্তকৃষি - বিনামূল্যের কৃষি গাইড</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            background-color: #f5fdf4;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* নেভিগেশন */
+        .navbar {
+            background-color: #2e7d32;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ffeb3b;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-links a:hover {
+            background-color: #1b5e20;
+        }
+
+        /* হিরো সেকশন */
+        .hero {
+            background: linear-gradient(rgba(46, 125, 50, 0.9), rgba(46, 125, 50, 0.8)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+            padding: 4rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+
+        .search-box {
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* ফিচার কার্ড */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card i {
+            font-size: 2.5rem;
+            color: #2e7d32;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            color: #2e7d32;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        /* ব্লগ সেকশন */
+        .blogs {
+            padding: 3rem 2rem;
+            background-color: #e8f5e9;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            color: #2e7d32;
+            margin-bottom: 2rem;
+        }
+
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .blog-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .blog-content {
+            padding: 1.5rem;
+        }
+
+        .blog-content h4 {
+            color: #2e7d32;
+            margin-bottom: 0.5rem;
+        }
+
+        .read-btn {
+            display: inline-block;
+            background-color: #2e7d32;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .read-btn:hover {
+            background-color: #1b5e20;
+        }
+
+        /* প্রশ্নোত্তর */
+        .qa-section {
+            padding: 3rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #questionForm {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        #questionForm textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #1b5e20;
+        }
+
+        .questions-container {
+            margin-top: 2rem;
+        }
+
+        .question-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        /* বাজার দাম */
+        .market {
+            padding: 3rem 2rem;
+            background-color: #f1f8e9;
+        }
+
+        .price-table {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        /* ফুটার */
+        footer {
+            background-color: #1b5e20;
+            color: white;
+            padding: 3rem 2rem 1rem;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .footer-section a {
+            color: #c8e6c9;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* মোবাইল রেস্পন্সিভ */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .nav-links {
+                margin-top: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .blog-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* কৃষি ক্যালেন্ডার */
+        .calendar {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            max-width: 800px;
+        }
+
+        .month {
+            background-color: #2e7d32;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .crop-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .crop-item {
+            background: #e8f5e9;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #2e7d32;
+        }
+
+        /* ট্যাব সিস্টেম */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #2e7d32;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1rem 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* প্রশ্ন আইটেমের স্টাইল */
+        .question-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .answer-form {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .answer-form.show {
+            display: block;
+        }
+
+        .answer-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .status-pending {
+            background: #ff9800;
+            color: white;
+        }
+
+        .status-answered {
+            background: #4caf50;
+            color: white;
+        }
+
+        /* অ্যাডমিন প্যানেল */
+        .admin-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2e7d32;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10000;
+        }
+
+        .admin-panel button {
+            background: white;
+            color: #2e7d32;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .admin-panel button.clear-btn {
+            background: #ff4444;
+            color: white;
+        }
+
+        /* স্ট্যাটাস বার */
+        .status-bar {
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        /* নাম ইনপুট */
+        .name-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- নেভিগেশন বার -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-seedling"></i>
+            <span>মুক্তকৃষি</span>
+        </div>
+        <div class="nav-links">
+            <a href="#home">হোম</a>
+            <a href="#blogs">ব্লগ</a>
+            <a href="#qa">প্রশ্নোত্তর</a>
+            <a href="#market">বাজার দাম</a>
+            <a href="#calendar">কৃষি ক্যালেন্ডার</a>
+        </div>
+    </nav>
+
+    <!-- হিরো সেকশন -->
+    <section id="home" class="hero">
+        <h1>বাংলাদেশের কৃষকদের জন্য বিনামূল্যের ডিজিটাল সহযোগী</h1>
+        <p>ফসলের যত্ন, রোগ-বালাই এর সমাধান, বাজার দাম এবং আধুনিক কৃষি পদ্ধতি সম্পর্কে সমস্ত তথ্য এক জায়গায়</p>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="আপনার ফসলের সমস্যা লিখুন (যেমন: ধানের পাতা হলুদ, টমেটোর পোকা ইত্যাদি)">
+        </div>
+    </section>
+
+    <!-- ফিচার কার্ড -->
+    <div class="features">
+        <div class="card" onclick="showTab('blog-tab')">
+            <i class="fas fa-book-open"></i>
+            <h3>কৃষি ব্লগ</h3>
+            <p>ধান, গম, আলু, সবজি চাষের সম্পূর্ণ গাইডলাইন</p>
+        </div>
+        
+        <div class="card" onclick="showTab('qa-tab')">
+            <i class="fas fa-question-circle"></i>
+            <h3>প্রশ্নোত্তর</h3>
+            <p>কৃষি বিশেষজ্ঞ ও অভিজ্ঞ কৃষকদের থেকে উত্তর পান</p>
+        </div>
+        
+        <div class="card" onclick="showTab('market-tab')">
+            <i class="fas fa-chart-line"></i>
+            <h3>বাজার দাম</h3>
+            <p>সর্বশেষ ফসলের বাজার মূল্য দেখুন</p>
+        </div>
+        
+        <div class="card" onclick="showTab('calendar-tab')">
+            <i class="fas fa-calendar-alt"></i>
+            <h3>কৃষি ক্যালেন্ডার</h3>
+            <p>মাস অনুযায়ী কী ফসল চাষ করবেন</p>
+        </div>
+    </div>
+
+    <!-- ব্লগ সেকশন -->
+    <section id="blogs" class="blogs">
+        <h2 class="section-title">কৃষি ব্লগ ও গাইড</h2>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('blog-tab')">সমস্ত ব্লগ</button>
+            <button class="tab-btn" onclick="showTab('disease-tab')">রোগ-বালাই</button>
+            <button class="tab-btn" onclick="showTab('fertilizer-tab')">সার ও পানি</button>
+        </div>
+        
+        <div id="blog-tab" class="tab-content active">
+            <div class="blog-grid">
+                <div class="blog-card">
+                    <div class="blog-content">
+                        <h4>ধান চাষের আধুনিক পদ্ধতি</h4>
+                        <p>ব্রি ধান ৮৯, ব্রি ধান ৯২ এবং উচ্চফলনশীল জাতের চাষাবাদ পদ্ধতি</p>
+                        <a href="#" class="read-btn" onclick="showBlogDetail('ধান চাষ')">পড়ুন</a>
+                    </div>
+                </div>
+                
+                <div class="blog-card">
+                    <div class="blog-content">
+                        <h4>জৈব সারের উপকারিতা</h4>
+                        <p>কম্পোস্ট, সবুজ সার ও জৈবিক পদ্ধতিতে ফসল উৎপাদন</p>
+                        <a href="#" class="read-btn" onclick="showBlogDetail('জৈব সার')">পড়ুন</a>
+                    </div>
+                </div>
+                
+                <div class="blog-card">
+                    <div class="blog-content">
+                        <h4>টমেটো চাষে সফলতা</h4>
+                        <p>টমেটোর রোগ-পোকা ব্যবস্থাপনা এবং ভালো ফলনের উপায়</p>
+                        <a href="#" class="read-btn" onclick="showBlogDetail('টমেটো চাষ')">পড়ুন</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="disease-tab" class="tab-content">
+            <div class="blog-grid">
+                <div class="blog-card">
+                    <div class="blog-content">
+                        <h4>ধান ক্ষেতে রোগ নির্ণয়</h4>
+                        <p>ব্লাস্ট, টুংরো, বাকানি রোগের লক্ষণ ও সমাধান</p>
+                        <a href="#" class="read-btn">পড়ুন</a>
+                    </div>
+                </div>
+                
+                <div class="blog-card">
+                    <div class="blog-content">
+                        <h4>প্রাকৃতিক কীটনাশক তৈরি</h4>
+                        <p>নিম পাতা, মেহেদি পাতা ও তামাক দিয়ে কীটনাশক তৈরি</p>
+                        <a href="#" class="read-btn">পড়ুন</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- প্রশ্নোত্তর সেকশন -->
+    <section id="qa" class="qa-section">
+        <h2 class="section-title">প্রশ্ন করুন উত্তর পান</h2>
+        
+        <!-- স্ট্যাটাস বার -->
+        <div class="status-bar" id="statusBar">
+            📊 স্ট্যাটাস: লোড হচ্ছে...
+        </div>
+        
+        <!-- প্রশ্ন ফর্ম -->
+        <form id="questionForm">
+            <input type="text" id="userNameInput" class="name-input" placeholder="আপনার নাম (ঐচ্ছিক)" value="">
+            <textarea id="questionInput" placeholder="আপনার কৃষি সম্পর্কিত প্রশ্নটি লিখুন..."></textarea>
+            <button type="submit" class="btn">প্রশ্ন জমা দিন</button>
+        </form>
+        
+        <!-- প্রশ্নের তালিকা -->
+        <div class="questions-container" id="questionsList">
+            <!-- এখানে JavaScript দিয়ে প্রশ্নগুলো লোড হবে -->
+        </div>
+    </section>
+
+    <!-- বাজার দাম সেকশন -->
+    <section id="market" class="market">
+        <h2 class="section-title">আজকের বাজার দাম</h2>
+        <div class="price-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ফসলের নাম</th>
+                        <th>একক</th>
+                        <th>দাম (টাকা)</th>
+                        <th>পরিবর্তন</th>
+                    </tr>
+                </thead>
+                <tbody id="priceTable">
+                    <!-- ডেটা JavaScript দিয়ে লোড হবে -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- কৃষি ক্যালেন্ডার -->
+    <section id="calendar" class="calendar">
+        <h2 class="section-title">কৃষি ক্যালেন্ডার (বৈশাখ - আষাঢ়)</h2>
+        <div class="month">
+            বৈশাখ (এপ্রিল-মে)
+        </div>
+        <div class="crop-list">
+            <div class="crop-item">
+                <h4>ধান</h4>
+                <p>ব্রি ধান ২৯, ৩৬ রোপণ</p>
+            </div>
+            <div class="crop-item">
+                <h4>পাট</h4>
+                <p>পাট বপনের উপযুক্ত সময়</p>
+            </div>
+            <div class="crop-item">
+                <h4>আলু</h4>
+                <p>আলু উত্তোলন</p>
+            </div>
+            <div class="crop-item">
+                <h4>ডাল</h4>
+                <p>মসুর ও মুগ ডাল বপন</p>
+            </div>
+        </div>
+        
+        <div class="month" style="margin-top: 2rem;">
+            জ্যৈষ্ঠ (মে-জুন)
+        </div>
+        <div class="crop-list">
+            <div class="crop-item">
+                <h4>আমন ধান</h4>
+                <p>বীজতলা তৈরি</p>
+            </div>
+            <div class="crop-item">
+                <h4>বাংলা মরিচ</h4>
+                <p>রোপণের সময়</p>
+            </div>
+            <div class="crop-item">
+                <h4>বেগুন</h4>
+                <p>চারা রোপণ</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ফুটার -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>মুক্তকৃষি</h4>
+                <p>বাংলাদেশের কৃষকদের জন্য সম্পূর্ণ বিনামূল্যে কৃষি তথ্য ও পরামর্শ সেবা</p>
+            </div>
+            
+            <div class="footer-section">
+                <h4>দরকারী লিঙ্ক</h4>
+                <a href="#home">হোম</a>
+                <a href="#blogs">ব্লগ</a>
+                <a href="#qa">প্রশ্নোত্তর</a>
+                <a href="#market">বাজার দাম</a>
+            </div>
+            
+            <div class="footer-section">
+                <h4>যোগাযোগ</h4>
+                <p>ইমেইল: info@muktokrishi.com</p>
+                <p>ফেসবুক: facebook.com/muktokrishi</p>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>© ২০২৩ মুক্তকৃষি - সকল অধিকার সংরক্ষিত | সম্পূর্ণ বিনামূল্যে সেবা</p>
+        </div>
+    </footer>
+
+    <!-- ব্লগ ডিটেইল মডাল -->
+    <div id="blogModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; padding:2rem; overflow-y:auto;">
+        <div style="background:white; max-width:800px; margin:2rem auto; padding:2rem; border-radius:10px;">
+            <h2 id="modalTitle" style="color:#2e7d32; margin-bottom:1rem;"></h2>
+            <div id="modalContent"></div>
+            <button onclick="closeModal()" class="btn" style="margin-top:2rem;">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <!-- অ্যাডমিন প্যানেল -->
+    <div class="admin-panel">
+        <div style="font-weight: bold; margin-bottom: 8px; text-align: center;">🔧 টুলস</div>
+        <button onclick="backupData()" title="ডেটা ব্যাকআপ">
+            📥 ব্যাকআপ
+        </button>
+        <button onclick="document.getElementById('restoreFile').click()" title="ডেটা রিস্টোর">
+            📤 রিস্টোর
+        </button>
+        <button onclick="clearAllData()" class="clear-btn" title="সব ডেটা মুছুন">
+            🗑️ ক্লিয়ার
+        </button>
+        <input type="file" id="restoreFile" accept=".json" style="display: none;">
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // ============================
+        // গ্লোবাল ভেরিয়েবল
+        // ============================
+        const STORAGE_KEY = 'muktokrishi_questions';
+        
+        // বাজার দাম ডেটা
+        const marketPrices = [
+            { crop: "ধান (প্রিমিয়াম)", unit: "কেজি", price: 50, change: "+2" },
+            { crop: "গম", unit: "কেজি", price: 35, change: "+1" },
+            { crop: "আলু", unit: "কেজি", price: 30, change: "0" },
+            { crop: "পেঁয়াজ", unit: "কেজি", price: 80, change: "-5" },
+            { crop: "টমেটো", unit: "কেজি", price: 40, change: "+3" },
+            { crop: "মরিচ", unit: "কেজি", price: 120, change: "+10" },
+            { crop: "ডাল (মসুর)", unit: "কেজি", price: 110, change: "+2" },
+            { crop: "পাট", unit: "মণ", price: 2800, change: "+50" }
+        ];
+
+        // ব্লগ ডেটা
+        const blogData = {
+            "ধান চাষ": `
+                <h3>ধান চাষের সম্পূর্ণ গাইড</h3>
+                <p><strong>উপযুক্ত সময়:</strong> আষাঢ়-শ্রাবণ (আমন), পৌষ-মাঘ (বোরো)</p>
+                <p><strong>জাত নির্বাচন:</strong></p>
+                <ul>
+                    <li>ব্রি ধান ৮৯ - উচ্চ ফলনশীল</li>
+                    <li>ব্রি ধান ৯২ - লবণাক্ততা সহনশীল</li>
+                    <li>ব্রি ধান ১০০ - রোগ প্রতিরোধী</li>
+                </ul>
+                <p><strong>সার ব্যবস্থাপনা (হেক্টরপ্রতি):</strong></p>
+                <ul>
+                    <li>ইউরিয়া: ২৫০-৩০০ কেজি</li>
+                    <li>টিএসপি: ১৫০-২০০ কেজি</li>
+                    <li>এমওপি: ১০০-১৫০ কেজি</li>
+                </ul>
+                <p><strong>পানি ব্যবস্থাপনা:</strong> চারা রোপণের পর ২-৩ সেমি পানি রাখুন।</p>
+            `,
+            "জৈব সার": `
+                <h3>জৈব সারের প্রস্তুতি ও ব্যবহার</h3>
+                <p><strong>কম্পোস্ট সার তৈরির উপায়:</strong></p>
+                <ol>
+                    <li>গোবর, খড়, পাতা স্তূপ করুন</li>
+                    <li>প্রতি ১৫ দিনে উল্টে দিন</li>
+                    <li>৪৫-৬০ দিনে তৈরি হয়ে যাবে</li>
+                </ol>
+                <p><strong>সবুজ সার:</strong> ধৈঞ্চা, সেসবেনিয়া চাষ করে মাটির সাথে মিশিয়ে দিন</p>
+                <p><strong>উপকারিতা:</strong></p>
+                <ul>
+                    <li>মাটির গঠন উন্নত করে</li>
+                    <li>পানি ধারণ ক্ষমতা বাড়ায়</li>
+                    <li>রাসায়নিক সারের প্রয়োজন কমে</li>
+                </ul>
+            `,
+            "টমেটো চাষ": `
+                <h3>টমেটো চাষে সফলতার উপায়</h3>
+                <p><strong>চাষের সময়:</strong> অক্টোবর-নভেম্বর (রবি মৌসুম)</p>
+                <p><strong>প্রধান জাত:</strong> বারি টমেটো ২, ৪, ৮, ১৪</p>
+                <p><strong>রোগ ব্যবস্থাপনা:</strong></p>
+                <ul>
+                    <li><strong>লেট ব্লাইট:</strong> রিডোমিল গোল্ড স্প্রে করুন</li>
+                    <li><strong>ভাইরাস:</strong> আক্রান্ত গাছ সরিয়ে ফেলুন</li>
+                    <li><strong>শিকড় পচা:</strong> ভালো ড্রেনেজ নিশ্চিত করুন</li>
+                </ul>
+                <p><strong>ফসল তোলা:</strong> ফলের গায়ে লালচে রং দেখতে পেলেই তোলা শুরু করুন</p>
+            `
+        };
+
+        // ============================
+        // LOCALSTORAGE ফাংশন
+        // ============================
+
+        // ১. প্রশ্ন সেভ
+        function saveQuestion(questionText, userName = "আনonymous") {
+            try {
+                let questions = getQuestions();
+                
+                const newQuestion = {
+                    id: Date.now(),
+                    text: questionText,
+                    user: userName || "আনonymous",
+                    answer: "",
+                    status: "pending",
+                    date: new Date().toLocaleDateString('bn-BD'),
+                    timestamp: new Date().toISOString()
+                };
+                
+                questions.unshift(newQuestion);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
+                
+                return { success: true, message: "✅ প্রশ্ন সেভ হয়েছে!", data: newQuestion };
+            } catch (error) {
+                return { success: false, message: "❌ ত্রুটি: " + error.message };
+            }
+        }
+
+        // ২. প্রশ্ন লোড
+        function getQuestions() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch (error) {
+                console.error("প্রশ্ন লোডে ত্রুটি:", error);
+                return [];
+            }
+        }
+
+        // ৩. উত্তর যোগ
+        function addAnswer(questionId, answerText, answeredBy = "কৃষি বিশেষজ্ঞ") {
+            try {
+                let questions = getQuestions();
+                const index = questions.findIndex(q => q.id === questionId);
+                
+                if (index !== -1) {
+                    questions[index].answer = answerText;
+                    questions[index].answeredBy = answeredBy;
+                    questions[index].status = "answered";
+                    questions[index].answerDate = new Date().toLocaleDateString('bn-BD');
+                    
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
+                    return { success: true, message: "✅ উত্তর যোগ হয়েছে!" };
+                }
+                return { success: false, message: "❌ প্রশ্ন খুঁজে পাওয়া যায়নি" };
+            } catch (error) {
+                return { success: false, message: "❌ ত্রুটি: " + error.message };
+            }
+        }
+
+        // ৪. প্রশ্ন মুছুন
+        function deleteQuestion(questionId) {
+            try {
+                let questions = getQuestions();
+                questions = questions.filter(q => q.id !== questionId);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
+                return { success: true, message: "🗑️ প্রশ্ন মুছে ফেলা হয়েছে" };
+            } catch (error) {
+                return { success: false, message: "❌ ত্রুটি: " + error.message };
+            }
+        }
+
+        // ৫. ডিফল্ট প্রশ্ন লোড
+        function loadDefaultQuestions() {
+            const questions = getQuestions();
+            if (questions.length === 0) {
+                const defaultQuestions = [
+                    {
+                        id: 1,
+                        text: "আমার ধানের পাতা হলুদ হয়ে যাচ্ছে, কী করব?",
+                        user: "রহিম, কুষ্টিয়া",
+                        answer: "এটি ইউরিয়া সারের অভাবের লক্ষণ। হেক্টরপ্রতি ৫০ কেজি ইউরিয়া সার প্রয়োগ করুন।",
+                        answeredBy: "কৃষি কর্মকর্তা",
+                        status: "answered",
+                        date: "১৫ অক্টোবর, ২০২৩",
+                        timestamp: "2023-10-15T10:30:00.000Z"
+                    },
+                    {
+                        id: 2,
+                        text: "টমেটো গাছে ছোট ছোট পোকা দেখা যাচ্ছে",
+                        user: "সেলিনা, বগুড়া",
+                        answer: "এটি এফিড বা সাদা মাছি পোকা। নিম পাতা সিদ্ধ করে স্প্রে করুন অথবা নিম অয়েল ব্যবহার করুন।",
+                        answeredBy: "অভিজ্ঞ কৃষক",
+                        status: "answered",
+                        date: "১২ অক্টোবর, ২০২৩",
+                        timestamp: "2023-10-12T14:20:00.000Z"
+                    }
+                ];
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultQuestions));
+            }
+        }
+
+        // ৬. স্ট্যাটিস্টিক্স
+        function getStats() {
+            const questions = getQuestions();
+            const answered = questions.filter(q => q.status === "answered").length;
+            const pending = questions.filter(q => q.status === "pending").length;
+            
+            return {
+                total: questions.length,
+                answered: answered,
+                pending: pending,
+                lastUpdated: questions.length > 0 ? questions[0].date : "কোনো ডেটা নেই"
+            };
+        }
+
+        // ৭. ব্যাকআপ
+        function backupData() {
+            try {
+                const questions = getQuestions();
+                if (questions.length === 0) {
+                    alert("⚠️ ব্যাকআপের জন্য কোনো ডেটা নেই!");
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(questions, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `মুক্তকৃষি_ব্যাকআপ_${new Date().toLocaleDateString('bn-BD')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert("📂 ব্যাকআপ ফাইল ডাউনলোড শুরু হয়েছে!");
+            } catch (error) {
+                alert("❌ ব্যাকআপে ত্রুটি: " + error.message);
+            }
+        }
+
+        // ৮. রিস্টোর
+        function restoreData(event) {
+            try {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (!Array.isArray(importedData)) {
+                            throw new Error("ভ্যালিড JSON ডেটা নয়");
+                        }
+                        
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(importedData));
+                        alert(`✅ ${importedData.length}টি ডেটা রিস্টোর হয়েছে!`);
+                        displayQuestions();
+                    } catch (error) {
+                        alert("❌ ফাইল রিস্টোরে ত্রুটি: " + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            } catch (error) {
+                alert("❌ ফাইল পড়তে ত্রুটি: " + error.message);
+            }
+        }
+
+        // ৯. সব ডেটা ক্লিয়ার
+        function clearAllData() {
+            if (confirm("⚠️ আপনি কি নিশ্চিত? সব প্রশ্ন মুছে যাবে!")) {
+                localStorage.removeItem(STORAGE_KEY);
+                alert("🧹 সব ডেটা মুছে ফেলা হয়েছে!");
+                displayQuestions();
+            }
+        }
+
+        // ============================
+        // UI ফাংশন
+        // ============================
+
+        // প্রশ্নগুলো UI-তে দেখানো
+        function displayQuestions() {
+            const questions = getQuestions();
+            const container = document.getElementById('questionsList');
+            const statusBar = document.getElementById('statusBar');
+            const stats = getStats();
+            
+            // স্ট্যাটাস বার আপডেট
+            statusBar.innerHTML = `📊 স্ট্যাটাস: মোট প্রশ্ন: ${stats.total} | উত্তর দেওয়া: ${stats.answered} | অপেক্ষমান: ${stats.pending}`;
+            
+            // কন্টেইনার ক্লিয়ার
+            container.innerHTML = '';
+            
+            if (questions.length === 0) {
+                container.innerHTML = `
+                    <div class="question-item" style="text-align: center; padding: 2rem;">
+                        <p>📝 এখনও কোনো প্রশ্ন জমা হয়নি</p>
+                        <p>প্রথম প্রশ্নটি করুন!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // প্রতিটি প্রশ্ন দেখানো
+            questions.forEach(question => {
+                const statusClass = question.status === "answered" ? "status-answered" : "status-pending";
+                const statusText = question.status === "answered" ? "উত্তর দেওয়া হয়েছে" : "উত্তর অপেক্ষমান";
+                
+                const questionElement = document.createElement('div');
+                questionElement.className = 'question-item';
+                questionElement.setAttribute('data-id', question.id);
+                
+                questionElement.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h4 style="margin: 0; flex: 1;">প্র: ${question.text}</h4>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    
+                    ${question.answer ? 
+                        `<p style="margin: 10px 0; padding: 10px; background: #e8f5e9; border-radius: 5px;">
+                            <strong>উত্তর:</strong> ${question.answer}
+                        </p>
+                        <small style="color: #666;">
+                            <strong>উত্তর দিয়েছেন:</strong> ${question.answeredBy || 'কৃষি বিশেষজ্ঞ'}
+                        </small><br>` : 
+                        `<p style="margin: 10px 0; color: #ff9800; font-style: italic;">
+                            আপনার প্রশ্নটি পর্যালোচনাধীন। শীঘ্রই উত্তর পাবেন।
+                        </p>`
+                    }
+                    
+                    <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                        <small>
+                            <strong>জমা করেছেন:</strong> ${question.user} | 
+                            <strong>তারিখ:</strong> ${question.date}
+                        </small>
+                    </div>
+                    
+                    <div class="question-actions">
+                        ${!question.answer ? `
+                        <button onclick="showAnswerForm(${question.id})" class="answer-btn">
+                            উত্তর দিন
+                        </button>
+                        ` : ''}
+                        <button onclick="deleteSingleQuestion(${question.id})" class="delete-btn">
+                            মুছুন
+                        </button>
+                    </div>
+                    
+                    ${!question.answer ? `
+                    <div class="answer-form" id="answerForm-${question.id}">
+                        <textarea id="answerInput-${question.id}" 
+                                  placeholder="উত্তর লিখুন..." 
+                                  rows="3"
+                                  style="width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+                        <button onclick="submitAnswer(${question.id})" class="btn" style="margin-top: 5px;">
+                            উত্তর জমা দিন
+                        </button>
+                    </div>
+                    ` : ''}
+                `;
+                
+                container.appendChild(questionElement);
+            });
+        }
+
+        // উত্তর ফর্ম দেখানো
+        function showAnswerForm(questionId) {
+            const form = document.getElementById(`answerForm-${questionId}`);
+            if (form) {
+                form.classList.toggle('show');
+            }
+        }
+
+        // উত্তর জমা দেওয়া
+        function submitAnswer(questionId) {
+            const answerInput = document.getElementById(`answerInput-${questionId}`);
+            const answerText = answerInput ? answerInput.value.trim() : '';
+            
+            if (!answerText) {
+                alert("অনুগ্রহ করে উত্তর লিখুন");
+                return;
+            }
+            
+            const result = addAnswer(questionId, answerText);
+            alert(result.message);
+            displayQuestions();
+        }
+
+        // একক প্রশ্ন মুছুন
+        function deleteSingleQuestion(questionId) {
+            if (confirm("এই প্রশ্নটি মুছে ফেলতে চান?")) {
+                const result = deleteQuestion(questionId);
+                alert(result.message);
+                displayQuestions();
+            }
+        }
+
+        // প্রশ্ন জমা ফর্ম হ্যান্ডলার
+        function handleQuestionSubmit(event) {
+            event.preventDefault();
+            
+            const questionInput = document.getElementById('questionInput');
+            const userNameInput = document.getElementById('userNameInput');
+            
+            const questionText = questionInput.value.trim();
+            const userName = userNameInput.value.trim() || "আনonymous";
+            
+            if (!questionText) {
+                alert("অনুগ্রহ করে প্রশ্ন লিখুন");
+                return;
+            }
+            
+            const result = saveQuestion(questionText, userName);
+            alert(result.message);
+            
+            // ফর্ম ক্লিয়ার
+            questionInput.value = '';
+            userNameInput.value = '';
+            
+            // UI রিফ্রেশ
+            displayQuestions();
+        }
+
+        // ============================
+        // অন্যান্য ফাংশন
+        // ============================
+
+        // বাজার দাম টেবিল লোড
+        function loadPriceTable() {
+            const tableBody = document.getElementById('priceTable');
+            tableBody.innerHTML = '';
+            
+            marketPrices.forEach(item => {
+                const changeClass = item.change.startsWith('+') ? 'style="color:green;"' : 
+                                   item.change.startsWith('-') ? 'style="color:red;"' : '';
+                
+                const row = `
+                    <tr>
+                        <td>${item.crop}</td>
+                        <td>${item.unit}</td>
+                        <td>${item.price} টাকা</td>
+                        <td ${changeClass}>${item.change.startsWith('+') ? '↑' : item.change.startsWith('-') ? '↓' : ''} ${item.change}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // ট্যাব দেখানো
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            const activeBtn = document.querySelector(`[onclick="showTab('${tabId}')"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            window.location.hash = tabId.replace('-tab', '');
+        }
+
+        // ব্লগ বিস্তারিত দেখানো
+        function showBlogDetail(blogTitle) {
+            if (blogData[blogTitle]) {
+                document.getElementById('modalTitle').textContent = blogTitle;
+                document.getElementById('modalContent').innerHTML = blogData[blogTitle];
+                document.getElementById('blogModal').style.display = 'block';
+            }
+        }
+
+        // মডাল বন্ধ করা
+        function closeModal() {
+            document.getElementById('blogModal').style.display = 'none';
+        }
+
+        // সার্চ ফাংশন
+        function searchContent(query) {
+            query = query.toLowerCase();
+            
+            if (query.includes('রোগ') || query.includes('পোকা') || query.includes('হলুদ')) {
+                showTab('disease-tab');
+                alert(`"${query}" সম্পর্কিত তথ্য দেখানো হচ্ছে`);
+            }
+            else if (query.includes('সার') || query.includes('পানি')) {
+                showTab('fertilizer-tab');
+                alert(`"${query}" সম্পর্কিত তথ্য দেখানো হচ্ছে`);
+            }
+            else {
+                const found = Object.keys(blogData).some(title => 
+                    title.toLowerCase().includes(query)
+                );
+                
+                if (found) {
+                    showTab('blog-tab');
+                    alert(`"${query}" সম্পর্কিত ব্লগ দেখানো হচ্ছে`);
+                } else {
+                    showTab('qa-tab');
+                    alert(`"${query}" সম্পর্কিত প্রশ্ন করুন`);
+                }
+            }
+        }
+
+        // ============================
+        // ইনিশিয়ালাইজেশন
+        // ============================
+
+        // পৃষ্ঠা লোড হলে
+        document.addEventListener('DOMContentLoaded', function() {
+            // ডিফল্ট ডেটা লোড
+            loadDefaultQuestions();
+            
+            // UI আপডেট
+            loadPriceTable();
+            displayQuestions();
+            
+            // ফর্ম ইভেন্ট লিস্টেনার
+            const questionForm = document.getElementById('questionForm');
+            if (questionForm) {
+                questionForm.addEventListener('submit', handleQuestionSubmit);
+            }
+            
+            // সার্চ ইভেন্ট
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchContent(this.value);
+                }
+            });
+            
+            // রিস্টোর ফাইল ইভেন্ট
+            document.getElementById('restoreFile').addEventListener('change', restoreData);
+            
+            // নেভিগেশন স্ক্রল
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#home') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        const targetElement = document.querySelector(targetId);
+                        if (targetElement) {
+                            window.scrollTo({
+                                top: targetElement.offsetTop - 80,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                });
+            });
+            
+            console.log("✅ মুক্তকৃষি অ্যাপ্লিকেশন লোড হয়েছে!");
+        });
+
+        // ============================
+        // টেস্টিং ফাংশন
+        // ============================
+
+        // টেস্ট ডেটা যোগ
+        function addTestData() {
+            const testQuestions = [
+                { text: "গমের রোগের প্রতিকার কী?", user: "করিম, রাজশাহী" },
+                { text: "কখন ভুট্টা চাষ করব?", user: "জাহিদ, রংপুর" },
+                { text: "জৈব কীটনাশক কিভাবে বানাব?", user: "আয়েশা, সিলেট" }
+            ];
+            
+            testQuestions.forEach(q => {
+                saveQuestion(q.text, q.user);
+            });
+            
+            alert("৩টি টেস্ট প্রশ্ন যোগ করা হয়েছে!");
+            displayQuestions();
+        }
+
+        // ডিবাগ মোড
+        function debugMode() {
+            console.log("🔍 LocalStorage কন্টেন্ট:");
+            console.log("প্রশ্ন:", getQuestions());
+            console.log("স্ট্যাটস:", getStats());
+            
+            // টেস্ট বাটন দেখান
+            const testBtn = document.createElement('button');
+            testBtn.textContent = "টেস্ট ডেটা যোগ";
+            testBtn.onclick = addTestData;
+            testBtn.style.cssText = `
+                position: fixed;
+                bottom: 70px;
+                right: 20px;
+                background: #2196f3;
+                color: white;
+                border: none;
+                padding: 8px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 10001;
+            `;
+            document.body.appendChild(testBtn);
+        }
+
+        // ডিবাগ মোড চালু (ঐচ্ছিক)
+        // debugMode();
+    </script>
+</body>
+</html>
