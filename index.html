@@ -1352,6 +1352,27 @@ let deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || 
 // Admin state
 let isAdminMode = localStorage.getItem('isAdminMode') === 'true';
 
+// ==================== SECURITY SETTINGS ====================
+const SECURITY_CONFIG = {
+    deleteProtection: true,
+    confirmBeforeDelete: true,
+    deleteDelay: 3000,
+    maxQuestionsPerDay: 50,
+    requireAdminForMassDelete: true,
+    requireAdminForAnswerDelete: true, // নতুন সেটিং
+    adminPassword: "2026"
+};
+
+// Track deletion attempts
+let deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || {
+    count: 0,
+    lastAttempt: null,
+    blockedUntil: null
+};
+
+// Admin state
+let isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+
 // ==================== SECURITY FUNCTIONS ====================
 
 // Check if user can delete
@@ -1403,6 +1424,7 @@ function adminLogin() {
         updateAdminPanel();
         updateSecurityMenu();
         showSecurityNotice();
+        createSecurityButton(); // বাটন আবার তৈরি করবে
     } else {
         alert("❌ ভুল পাসওয়ার্ড!");
     }
@@ -1417,6 +1439,7 @@ function adminLogout() {
     updateAdminPanel();
     updateSecurityMenu();
     removeSecurityNotice();
+    removeSecurityButton(); // বাটন সরিয়ে ফেলবে
 }
 
 // Update admin panel UI
@@ -1481,6 +1504,64 @@ function deleteSingleQuestion(questionId) {
     }, 500);
     
     displayQuestions();
+}
+
+// নতুন ফাংশন: উত্তর ডিলেট করা (শুধু অ্যাডমিন)
+function deleteAnswer(questionId) {
+    if (!isAdminMode) {
+        alert("🚫 শুধুমাত্র অ্যাডমিন উত্তর ডিলেট করতে পারেন!");
+        return;
+    }
+    
+    const questions = getQuestions();
+    const questionIndex = questions.findIndex(q => q.id === questionId);
+    
+    if (questionIndex === -1) {
+        alert("❌ প্রশ্ন পাওয়া যায়নি!");
+        return;
+    }
+    
+    const question = questions[questionIndex];
+    
+    if (!question.answer) {
+        alert("⚠️ এই প্রশ্নের কোনো উত্তর নেই!");
+        return;
+    }
+    
+    const confirmMessage = `
+আপনি কি এই উত্তরটি ডিলেট করতে চান?
+
+প্রশ্ন: "${question.text.substring(0, 50)}${question.text.length > 50 ? '...' : ''}"
+
+উত্তর: "${question.answer.substring(0, 50)}${question.answer.length > 50 ? '...' : ''}"
+
+⚠️ সতর্কতা: উত্তর ডিলেট করলে এটি চিরতরে মুছে যাবে!
+    `.trim();
+    
+    if (!confirm(confirmMessage)) return;
+    
+    const verificationText = "উত্তর ডিলেট";
+    const userInput = prompt(`ডিলেট নিশ্চিত করতে "${verificationText}" লিখুন:`);
+    
+    if (userInput !== verificationText) {
+        alert("❌ ভেরিফিকেশন ব্যর্থ! ডিলেট বাতিল করা হয়েছে।");
+        return;
+    }
+    
+    // উত্তর মুছে ফেলা
+    questions[questionIndex].answer = null;
+    questions[questionIndex].answeredBy = null;
+    questions[questionIndex].status = "pending";
+    questions[questionIndex].answerTimestamp = null;
+    
+    // আপডেট সংরক্ষণ
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
+    
+    alert("✅ উত্তর সফলভাবে ডিলেট করা হয়েছে!");
+    displayQuestions();
+    
+    // ডিলেট ট্র্যাক করা
+    trackDeletionAttempt();
 }
 
 // Bulk delete protection
@@ -1567,6 +1648,11 @@ function reportQuestion(questionId) {
 
 // Security report viewer
 function showSecurityReport() {
+    if (!isAdminMode) {
+        alert("🚫 শুধুমাত্র অ্যাডমিন সিকিউরিটি রিপোর্ট দেখতে পারেন!");
+        return;
+    }
+    
     const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
     const deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || { count: 0 };
     
@@ -1615,19 +1701,42 @@ function showSecurityReport() {
             <button onclick="this.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">✕</button>
         </div>
         ${reportHTML}
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+            <button onclick="clearSecurityReports()" style="background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">রিপোর্ট ক্লিয়ার করুন</button>
+        </div>
     `;
     
     document.body.appendChild(modal);
 }
 
+// Clear security reports
+function clearSecurityReports() {
+    if (!isAdminMode) {
+        alert("🚫 শুধুমাত্র অ্যাডমিন রিপোর্ট ক্লিয়ার করতে পারেন!");
+        return;
+    }
+    
+    if (confirm("🚨 সব সিকিউরিটি রিপোর্ট মুছে ফেলবেন?")) {
+        localStorage.removeItem('question_reports');
+        alert("✅ রিপোর্ট ক্লিয়ার করা হয়েছে!");
+        showSecurityReport();
+    }
+}
+
 // Security checklist function
 function runSecurityCheck() {
+    if (!isAdminMode) {
+        alert("🚫 শুধুমাত্র অ্যাডমিন সিকিউরিটি চেক করতে পারেন!");
+        return;
+    }
+    
     const checklist = [
-        { id: 1, text: "ডিলেট কনফার্মেশন চালু", checked: true },
-        { id: 2, text: "অ্যাডমিন পাসওয়ার্ড সেট", checked: SECURITY_CONFIG.adminPassword !== "krishi123" },
+        { id: 1, text: "ডিলেট কনফার্মেশন চালু", checked: SECURITY_CONFIG.confirmBeforeDelete },
+        { id: 2, text: "অ্যাডমিন পাসওয়ার্ড সেট", checked: SECURITY_CONFIG.adminPassword !== "2026" },
         { id: 3, text: "রেট লিমিটিং চালু", checked: true },
         { id: 4, text: "রিপোর্ট সিস্টেম চালু", checked: true },
-        { id: 5, text: "ব্যাকআপ/রিস্টোর চালু", checked: true }
+        { id: 5, text: "উত্তর ডিলেট প্রোটেকশন", checked: SECURITY_CONFIG.requireAdminForAnswerDelete },
+        { id: 6, text: "মাস ডিলেট প্রোটেকশন", checked: SECURITY_CONFIG.requireAdminForMassDelete }
     ];
     
     let checkHTML = "<h3>🔒 সিকিউরিটি চেকলিস্ট</h3><ul>";
@@ -1640,6 +1749,18 @@ function runSecurityCheck() {
         `;
     });
     checkHTML += "</ul>";
+    
+    // Calculate security score
+    const totalChecks = checklist.length;
+    const passedChecks = checklist.filter(c => c.checked).length;
+    const securityScore = Math.round((passedChecks / totalChecks) * 100);
+    
+    checkHTML += `
+        <div style="margin-top: 15px; padding: 15px; background: ${securityScore > 80 ? '#d4edda' : securityScore > 60 ? '#fff3cd' : '#f8d7da'}; border-radius: 5px;">
+            <strong>সিকিউরিটি স্কোর: ${securityScore}%</strong>
+            <p>${securityScore > 80 ? '👍 ভালো সুরক্ষা' : securityScore > 60 ? '⚠️ মাঝারি সুরক্ষা' : '👎 দুর্বল সুরক্ষা'}</p>
+        </div>
+    `;
     
     if (checklist.filter(c => !c.checked).length > 0) {
         checkHTML += `<p style="color: #d32f2f; margin-top: 10px;">
@@ -1675,20 +1796,22 @@ function runSecurityCheck() {
     document.body.appendChild(modal);
 }
 
-// Create security button
+// Create security button (শুধু অ্যাডমিন মোডে দেখাবে)
 function createSecurityButton() {
     // Remove existing button if any
-    const existingBtn = document.querySelector('#securityCheckBtn');
-    if (existingBtn) existingBtn.remove();
+    removeSecurityButton();
+    
+    // Only create button if in admin mode
+    if (!isAdminMode) return;
     
     const checkBtn = document.createElement('button');
     checkBtn.id = 'securityCheckBtn';
-    checkBtn.innerHTML = isAdminMode ? '👑 সিকিউরিটি' : '🔒 সিকিউরিটি';
+    checkBtn.innerHTML = '👑 সিকিউরিটি';
     checkBtn.style.cssText = `
         position: fixed;
         bottom: 120px;
         right: 20px;
-        background: ${isAdminMode ? '#ff9800' : '#607d8b'};
+        background: #ff9800;
         color: white;
         border: none;
         padding: 10px 15px;
@@ -1759,6 +1882,12 @@ function createSecurityButton() {
     }, 1000);
 }
 
+// Remove security button
+function removeSecurityButton() {
+    const existingBtn = document.querySelector('#securityCheckBtn');
+    if (existingBtn) existingBtn.remove();
+}
+
 // Update security menu in navbar
 function updateSecurityMenu() {
     // Remove existing security menu
@@ -1781,8 +1910,10 @@ function updateSecurityMenu() {
                         `<button onclick="adminLogout()" style="width: 100%; text-align: left; padding: 8px 12px; background: #ff9800; color: white; border: none; border-radius: 3px; margin-bottom: 5px; cursor: pointer;">👑 লগআউট</button>` : 
                         `<button onclick="adminLogin()" style="width: 100%; text-align: left; padding: 8px 12px; background: #2196f3; color: white; border: none; border-radius: 3px; margin-bottom: 5px; cursor: pointer;">🔒 অ্যাডমিন লগইন</button>`
                     }
-                    <button onclick="showSecurityReport()" style="width: 100%; text-align: left; padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 5px; cursor: pointer;">📊 রিপোর্ট দেখুন</button>
-                    <button onclick="runSecurityCheck()" style="width: 100%; text-align: left; padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; cursor: pointer;">🔍 সিকিউরিটি চেক</button>
+                    ${isAdminMode ? `
+                        <button onclick="showSecurityReport()" style="width: 100%; text-align: left; padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 5px; cursor: pointer;">📊 রিপোর্ট দেখুন</button>
+                        <button onclick="runSecurityCheck()" style="width: 100%; text-align: left; padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; cursor: pointer;">🔍 সিকিউরিটি চেক</button>
+                    ` : ''}
                 </div>
             </a>
         `;
@@ -1832,7 +1963,7 @@ function showSecurityNotice() {
     
     securityNotice.innerHTML = `
         <strong>👑 অ্যাডমিন মোড চালু</strong><br>
-        <small>আপনি প্রশ্ন ডিলেট এবং সব ডেটা ম্যানেজ করতে পারেন।</small>
+        <small>আপনি প্রশ্ন ডিলেট, উত্তর ডিলেট এবং সব ডেটা ম্যানেজ করতে পারেন।</small>
         <button onclick="removeSecurityNotice()" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 12px; cursor: pointer;">✕</button>
     `;
     
@@ -1842,6 +1973,129 @@ function showSecurityNotice() {
 function removeSecurityNotice() {
     const notice = document.getElementById('securityNotice');
     if (notice) notice.remove();
+}
+
+// ==================== DISPLAY QUESTIONS UPDATED ====================
+
+// Modified displayQuestions function with answer delete option
+function displayQuestions() {
+    const questions = getQuestions();
+    const container = document.getElementById('questionsList');
+    const statusBar = document.getElementById('statusBar');
+    const stats = getStats();
+    
+    // Show security status
+    const securityStatus = isAdminMode ? "👑 অ্যাডমিন মোড" : "🔒 সাধারণ মোড";
+    statusBar.innerHTML = `
+        📊 স্ট্যাটাস: মোট প্রশ্ন: ${stats.total} | উত্তর দেওয়া: ${stats.answered} | অপেক্ষমান: ${stats.pending}
+        <br><small>${securityStatus}</small>
+    `;
+    
+    container.innerHTML = '';
+    
+    if (questions.length === 0) {
+        container.innerHTML = `
+            <div class="question-item" style="text-align: center; padding: 2rem;">
+                <p>📝 এখনও কোনো প্রশ্ন জমা হয়নি</p>
+                <p>প্রথম প্রশ্নটি করুন!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    questions.forEach(question => {
+        const statusClass = question.status === "answered" ? "status-answered" : "status-pending";
+        const statusText = question.status === "answered" ? "উত্তর দেওয়া হয়েছে" : "উত্তর অপেক্ষমান";
+        
+        const questionElement = document.createElement('div');
+        questionElement.className = 'question-item';
+        
+        // Calculate question age
+        const questionDate = new Date(question.timestamp);
+        const now = new Date();
+        const diffHours = Math.floor((now - questionDate) / (1000 * 60 * 60));
+        const ageText = diffHours < 24 ? `${diffHours} ঘণ্টা আগে` : `${Math.floor(diffHours/24)} দিন আগে`;
+        
+        questionElement.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h4 style="margin: 0; flex: 1;">প্র: ${question.text}</h4>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+            
+            <div style="font-size: 0.9em; color: #666; margin: 5px 0;">
+                <small>⏰ ${ageText}</small>
+            </div>
+            
+            ${question.answer ? 
+                `<div style="position: relative;">
+                    <p style="margin: 10px 0; padding: 10px; background: #e8f5e9; border-radius: 5px;">
+                        <strong>উত্তর:</strong> ${question.answer}
+                        ${isAdminMode ? 
+                            `<button onclick="deleteAnswer(${question.id})" 
+                                     style="position: absolute; top: 5px; right: 5px; background: #f44336; color: white; border: none; padding: 3px 8px; border-radius: 3px; font-size: 0.8em; cursor: pointer;">
+                                🗑️ উত্তর মুছুন
+                            </button>` 
+                            : ''}
+                    </p>
+                    <small style="color: #666;">
+                        <strong>উত্তর দিয়েছেন:</strong> ${question.answeredBy || 'কৃষি বিশেষজ্ঞ'}
+                    </small><br>
+                </div>` 
+                : 
+                `<p style="margin: 10px 0; color: #ff9800; font-style: italic;">
+                    আপনার প্রশ্নটি পর্যালোচনাধীন। শীঘ্রই উত্তর পাবেন।
+                </p>`
+            }
+            
+            <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                <small>
+                    <strong>জমা করেছেন:</strong> ${question.user} | 
+                    <strong>তারিখ:</strong> ${question.date}
+                </small>
+            </div>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                ${!question.answer ? `
+                <button onclick="showAnswerForm(${question.id})" class="btn" style="padding: 5px 15px; font-size: 0.9em;">
+                    উত্তর দিন
+                </button>
+                ` : ''}
+                
+                <!-- Delete button only shows in admin mode -->
+                ${isAdminMode ? `
+                <button onclick="deleteSingleQuestion(${question.id})" class="delete-btn" title="প্রশ্ন মুছুন">
+                    🗑️ প্রশ্ন মুছুন
+                </button>
+                ` : ''}
+                
+                ${!isAdminMode && diffHours < 1 ? `
+                <button onclick="deleteSingleQuestion(${question.id})" class="delete-btn" title="প্রশ্ন মুছুন">
+                    🗑️ মুছুন
+                </button>
+                ` : ''}
+                
+                ${!isAdminMode && diffHours >= 1 ? `
+                <button onclick="reportQuestion(${question.id})" class="btn" style="background: #ff9800; padding: 5px 15px; font-size: 0.9em;">
+                    ⚠️ রিপোর্ট করুন
+                </button>
+                ` : ''}
+            </div>
+            
+            ${!question.answer ? `
+            <div id="answerForm-${question.id}" style="margin-top: 15px; display: none;">
+                <textarea id="answerInput-${question.id}" 
+                          placeholder="উত্তর লিখুন..." 
+                          rows="3"
+                          style="width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+                <button onclick="submitAnswer(${question.id})" class="btn" style="margin-top: 5px;">
+                    উত্তর জমা দিন
+                </button>
+            </div>
+            ` : ''}
+        `;
+        
+        container.appendChild(questionElement);
+    });
 }
 
 // Initialize security features
@@ -1877,7 +2131,7 @@ function initSecurity() {
                 `;
                 userNotice.innerHTML = `
                     <strong>🔒 সুরক্ষিত মোড</strong><br>
-                    <small>প্রশ্ন ডিলেট করতে অ্যাডমিন লগইন করুন।</small>
+                    <small>• প্রশ্ন ডিলেট করতে অ্যাডমিন লগইন করুন<br>• উত্তর ডিলেট শুধু অ্যাডমিনের জন্য</small>
                     <button onclick="this.parentElement.remove()" style="position: absolute; top: 5px; right: 5px; background: none; border: none; font-size: 12px; cursor: pointer;">✕</button>
                 `;
                 document.body.appendChild(userNotice);
@@ -1910,6 +2164,7 @@ if (document.readyState === 'loading') {
 </body>
 
 </html>
+
 
 
 
