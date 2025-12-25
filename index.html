@@ -1332,6 +1332,424 @@
 
         // ডিবাগ মোড চালু (ঐচ্ছিক)
         // debugMode();
+        // ==================== SECURITY SETTINGS ====================
+const SECURITY_CONFIG = {
+    deleteProtection: true,
+    confirmBeforeDelete: true,
+    deleteDelay: 3000, // 3 seconds delay before actual delete
+    maxQuestionsPerDay: 50,
+    requireAdminForMassDelete: true,
+    adminPassword: "krishi123" // Change this password
+};
+
+// Track deletion attempts
+let deletionAttempts = JSON.parse(localStorage.getItem('deletion_attempts')) || {
+    count: 0,
+    lastAttempt: null,
+    blockedUntil: null
+};
+
+// Admin state
+let isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+
+// ==================== SECURITY FUNCTIONS ====================
+
+// Check if user can delete
+function canUserDelete() {
+    // Check if blocked
+    if (deletionAttempts.blockedUntil && new Date() < new Date(deletionAttempts.blockedUntil)) {
+        const remainingTime = Math.ceil((new Date(deletionAttempts.blockedUntil) - new Date()) / 1000 / 60);
+        alert(`🚫 খুব বেশি বার ডিলেট চেষ্টা করেছেন। ${remainingTime} মিনিট পরে আবার চেষ্টা করুন।`);
+        return false;
+    }
+    
+    // Check rate limiting (max 10 deletions per hour)
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    if (deletionAttempts.count > 10 && new Date(deletionAttempts.lastAttempt) > hourAgo) {
+        deletionAttempts.blockedUntil = new Date(Date.now() + 30 * 60 * 1000); // Block for 30 minutes
+        localStorage.setItem('deletion_attempts', JSON.stringify(deletionAttempts));
+        alert("🚫 ১ ঘণ্টায় ১০টির বেশি প্রশ্ন ডিলেট করা যাবে না। ৩০ মিনিট পর আবার চেষ্টা করুন।");
+        return false;
+    }
+    
+    return true;
+}
+
+// Track deletion attempt
+function trackDeletionAttempt() {
+    deletionAttempts.count++;
+    deletionAttempts.lastAttempt = new Date().toISOString();
+    localStorage.setItem('deletion_attempts', JSON.stringify(deletionAttempts));
+}
+
+// Reset deletion attempts (daily)
+function resetDeletionAttempts() {
+    const today = new Date().toDateString();
+    const lastReset = localStorage.getItem('last_deletion_reset');
+    
+    if (lastReset !== today) {
+        deletionAttempts = { count: 0, lastAttempt: null, blockedUntil: null };
+        localStorage.setItem('deletion_attempts', JSON.stringify(deletionAttempts));
+        localStorage.setItem('last_deletion_reset', today);
+    }
+}
+
+// Admin login
+function adminLogin() {
+    const password = prompt("অ্যাডমিন পাসওয়ার্ড দিন:");
+    if (password === SECURITY_CONFIG.adminPassword) {
+        isAdminMode = true;
+        localStorage.setItem('isAdminMode', 'true');
+        alert("✅ অ্যাডমিন মোড চালু হয়েছে!");
+        displayQuestions(); // Refresh to show delete buttons
+        updateAdminPanel();
+    } else {
+        alert("❌ ভুল পাসওয়ার্ড!");
+    }
+}
+
+// Admin logout
+function adminLogout() {
+    isAdminMode = false;
+    localStorage.removeItem('isAdminMode');
+    alert("✅ অ্যাডমিন মোড বন্ধ হয়েছে!");
+    displayQuestions(); // Refresh to hide delete buttons
+    updateAdminPanel();
+}
+
+// Update admin panel UI
+function updateAdminPanel() {
+    const adminPanel = document.querySelector('.admin-panel');
+    if (adminPanel) {
+        const adminStatus = isAdminMode ? 
+            `<button onclick="adminLogout()" style="background:#ff9800;">👑 লগআউট</button>` :
+            `<button onclick="adminLogin()" style="background:#2196f3;">🔒 অ্যাডমিন</button>`;
+        
+        adminPanel.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 8px; text-align: center;">${isAdminMode ? '👑 অ্যাডমিন মোড' : '🔧 টুলস'}</div>
+            ${adminStatus}
+            <button onclick="backupData()" title="ডেটা ব্যাকআপ">📥 ব্যাকআপ</button>
+            <button onclick="document.getElementById('restoreFile').click()" title="ডেটা রিস্টোর">📤 রিস্টোর</button>
+            ${isAdminMode ? '<button onclick="clearAllData()" class="clear-btn" title="সব ডেটা মুছুন">🗑️ ক্লিয়ার</button>' : ''}
+            <input type="file" id="restoreFile" accept=".json" style="display: none;">
+        `;
+    }
+}
+
+// Enhanced delete function with protection
+function deleteSingleQuestion(questionId) {
+    if (!canUserDelete()) return;
+    
+    // Get question details
+    const questions = getQuestions();
+    const question = questions.find(q => q.id === questionId);
+    
+    if (!question) return;
+    
+    // Show confirmation with question preview
+    const questionPreview = question.text.length > 50 ? 
+        question.text.substring(0, 50) + "..." : question.text;
+    
+    const confirmMessage = `
+আপনি কি এই প্রশ্নটি ডিলেট করতে চান?
+
+"${questionPreview}"
+
+⚠️ সতর্কতা: ডিলেট করলে প্রশ্নটি চিরতরে মুছে যাবে!
+    `.trim();
+    
+    if (!confirm(confirmMessage)) return;
+    
+    // Additional protection: Type verification text
+    const verificationText = "ডিলেট";
+    const userInput = prompt(`ডিলেট নিশ্চিত করতে "${verificationText}" লিখুন:`);
+    
+    if (userInput !== verificationText) {
+        alert("❌ ভেরিফিকেশন ব্যর্থ! ডিলেট বাতিল করা হয়েছে।");
+        return;
+    }
+    
+    // Final confirmation
+    if (!confirm("🚨 সর্বশেষ সতর্কতা: আপনি কি নিশ্চিত?")) return;
+    
+    // Track the attempt
+    trackDeletionAttempt();
+    
+    // Perform deletion
+    const result = deleteQuestion(questionId);
+    alert(result.message);
+    
+    // Show remaining questions
+    const remaining = getQuestions().length;
+    setTimeout(() => {
+        alert(`ℹ️ মোট প্রশ্ন আছে: ${remaining}টি`);
+    }, 500);
+    
+    displayQuestions();
+}
+
+// Bulk delete protection
+function deleteMultipleQuestions(questionIds) {
+    if (!isAdminMode) {
+        alert("🚫 শুধুমাত্র অ্যাডমিন একাধিক প্রশ্ন ডিলেট করতে পারেন!");
+        return;
+    }
+    
+    const count = questionIds.length;
+    if (count > 5) {
+        if (!confirm(`🚨 আপনি ${count}টি প্রশ্ন ডিলেট করতে চান! এটি ঝুঁকিপূর্ণ। চলবে?`)) return;
+    }
+    
+    const password = prompt(`${count}টি প্রশ্ন ডিলেট করতে অ্যাডমিন পাসওয়ার্ড দিন:`);
+    if (password !== SECURITY_CONFIG.adminPassword) {
+        alert("❌ ভুল পাসওয়ার্ড! ডিলেট বাতিল।");
+        return;
+    }
+    
+    // Delay before actual deletion
+    setTimeout(() => {
+        let deleted = 0;
+        questionIds.forEach(id => {
+            deleteQuestion(id);
+            deleted++;
+        });
+        alert(`✅ ${deleted}টি প্রশ্ন ডিলেট হয়েছে!`);
+        displayQuestions();
+    }, 2000);
+}
+
+// Enhanced clear all data function
+function clearAllData() {
+    if (!isAdminMode) {
+        alert("🚫 শুধুমাত্র অ্যাডমিন সব ডেটা ক্লিয়ার করতে পারেন!");
+        return;
+    }
+    
+    const questions = getQuestions();
+    const count = questions.length;
+    
+    if (count === 0) {
+        alert("⚠️ ডিলেট করার কোনো ডেটা নেই!");
+        return;
+    }
+    
+    // Show preview of what will be deleted
+    let preview = "নিচের প্রশ্নগুলো মুছে যাবে:\n\n";
+    questions.slice(0, 3).forEach((q, i) => {
+        preview += `${i+1}. ${q.text.substring(0, 40)}...\n`;
+    });
+    if (count > 3) preview += `\n... এবং আরও ${count-3}টি প্রশ্ন`;
+    
+    if (!confirm(preview + "\n\n❌ আপনি কি নিশ্চিত?")) return;
+    
+    // Type verification
+    const verificationCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const userInput = prompt(`নিশ্চিত করতে "${verificationCode}" লিখুন:`);
+    
+    if (userInput !== verificationCode) {
+        alert("❌ ভেরিফিকেশন ব্যর্থ!");
+        return;
+    }
+    
+    // Final warning
+    if (!confirm("🚨 এটি চিরতরে সব ডেটা মুছে ফেলবে! শেষ সতর্কতা:")) return;
+    
+    localStorage.removeItem(STORAGE_KEY);
+    alert("🧹 সব ডেটা মুছে ফেলা হয়েছে!");
+    displayQuestions();
+}
+
+// ==================== MODIFIED DISPLAY FUNCTION ====================
+
+// Modified displayQuestions function with security
+function displayQuestions() {
+    const questions = getQuestions();
+    const container = document.getElementById('questionsList');
+    const statusBar = document.getElementById('statusBar');
+    const stats = getStats();
+    
+    // Show security status
+    const securityStatus = isAdminMode ? "👑 অ্যাডমিন মোড" : "🔒 সাধারণ মোড";
+    statusBar.innerHTML = `
+        📊 স্ট্যাটাস: মোট প্রশ্ন: ${stats.total} | উত্তর দেওয়া: ${stats.answered} | অপেক্ষমান: ${stats.pending}
+        <br><small>${securityStatus}</small>
+    `;
+    
+    container.innerHTML = '';
+    
+    if (questions.length === 0) {
+        container.innerHTML = `
+            <div class="question-item" style="text-align: center; padding: 2rem;">
+                <p>📝 এখনও কোনো প্রশ্ন জমা হয়নি</p>
+                <p>প্রথম প্রশ্নটি করুন!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    questions.forEach(question => {
+        const statusClass = question.status === "answered" ? "status-answered" : "status-pending";
+        const statusText = question.status === "answered" ? "উত্তর দেওয়া হয়েছে" : "উত্তর অপেক্ষমান";
+        
+        const questionElement = document.createElement('div');
+        questionElement.className = 'question-item';
+        
+        // Calculate question age
+        const questionDate = new Date(question.timestamp);
+        const now = new Date();
+        const diffHours = Math.floor((now - questionDate) / (1000 * 60 * 60));
+        const ageText = diffHours < 24 ? `${diffHours} ঘণ্টা আগে` : `${Math.floor(diffHours/24)} দিন আগে`;
+        
+        questionElement.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h4 style="margin: 0; flex: 1;">প্র: ${question.text}</h4>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+            
+            <div style="font-size: 0.9em; color: #666; margin: 5px 0;">
+                <small>⏰ ${ageText}</small>
+            </div>
+            
+            ${question.answer ? 
+                `<p style="margin: 10px 0; padding: 10px; background: #e8f5e9; border-radius: 5px;">
+                    <strong>উত্তর:</strong> ${question.answer}
+                </p>
+                <small style="color: #666;">
+                    <strong>উত্তর দিয়েছেন:</strong> ${question.answeredBy || 'কৃষি বিশেষজ্ঞ'}
+                </small><br>` : 
+                `<p style="margin: 10px 0; color: #ff9800; font-style: italic;">
+                    আপনার প্রশ্নটি পর্যালোচনাধীন। শীঘ্রই উত্তর পাবেন।
+                </p>`
+            }
+            
+            <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                <small>
+                    <strong>জমা করেছেন:</strong> ${question.user} | 
+                    <strong>তারিখ:</strong> ${question.date}
+                </small>
+            </div>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                ${!question.answer ? `
+                <button onclick="showAnswerForm(${question.id})" class="btn" style="padding: 5px 15px; font-size: 0.9em;">
+                    উত্তর দিন
+                </button>
+                ` : ''}
+                
+                <!-- Delete button only shows in admin mode or for very old questions -->
+                ${isAdminMode || diffHours < 1 ? `
+                <button onclick="deleteSingleQuestion(${question.id})" class="delete-btn" title="প্রশ্ন মুছুন">
+                    🗑️ মুছুন
+                </button>
+                ` : ''}
+                
+                ${diffHours >= 1 && !isAdminMode ? `
+                <button onclick="reportQuestion(${question.id})" class="btn" style="background: #ff9800; padding: 5px 15px; font-size: 0.9em;">
+                    ⚠️ রিপোর্ট করুন
+                </button>
+                ` : ''}
+            </div>
+            
+            ${!question.answer ? `
+            <div id="answerForm-${question.id}" style="margin-top: 15px; display: none;">
+                <textarea id="answerInput-${question.id}" 
+                          placeholder="উত্তর লিখুন..." 
+                          rows="3"
+                          style="width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+                <button onclick="submitAnswer(${question.id})" class="btn" style="margin-top: 5px;">
+                    উত্তর জমা দিন
+                </button>
+            </div>
+            ` : ''}
+        `;
+        
+        container.appendChild(questionElement);
+    });
+}
+
+// Report question function
+function reportQuestion(questionId) {
+    const reason = prompt("রিপোর্টের কারণ লিখুন (স্প্যাম, অপপ্রয়োগ, অশ্লীলতা ইত্যাদি):");
+    if (reason) {
+        // Store report in localStorage
+        const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
+        reports.push({
+            questionId,
+            reason,
+            timestamp: new Date().toISOString()
+        });
+        localStorage.setItem('question_reports', JSON.stringify(reports));
+        
+        alert("✅ রিপোর্ট জমা হয়েছে! অ্যাডমিন পর্যালোচনা করবেন।");
+    }
+}
+
+// ==================== INITIALIZATION ====================
+
+// Add this to your existing initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Reset deletion attempts daily
+    resetDeletionAttempts();
+    
+    // Check admin mode
+    isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+    
+    // Update admin panel
+    updateAdminPanel();
+    
+    // Add security notice
+    const securityNotice = document.createElement('div');
+    securityNotice.style.cssText = `
+        position: fixed;
+        top: 70px;
+        right: 20px;
+        background: #fff3cd;
+        border: 1px solid #ffecb5;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 0.8rem;
+        max-width: 250px;
+        z-index: 9999;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: ${isAdminMode ? 'block' : 'none'};
+    `;
+    securityNotice.innerHTML = `
+        <strong>👑 অ্যাডমিন মোড</strong><br>
+        আপনি প্রশ্ন ডিলেট করতে পারেন।
+    `;
+    document.body.appendChild(securityNotice);
+    
+    // Show regular user notice
+    if (!isAdminMode) {
+        setTimeout(() => {
+            const userNotice = document.createElement('div');
+            userNotice.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                right: 20px;
+                background: #d1ecf1;
+                border: 1px solid #bee5eb;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 0.8rem;
+                max-width: 250px;
+                z-index: 9999;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            `;
+            userNotice.innerHTML = `
+                <strong>🔒 সুরক্ষিত</strong><br>
+                প্রশ্ন ডিলেট করতে অ্যাডমিন লগইন করুন।
+            `;
+            document.body.appendChild(userNotice);
+            
+            // Auto remove after 10 seconds
+            setTimeout(() => userNotice.remove(), 10000);
+        }, 5000);
+    }
+    
+    // ... rest of your existing initialization code ...
+});
     </script>
 </body>
+
 </html>
