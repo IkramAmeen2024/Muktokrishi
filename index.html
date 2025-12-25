@@ -1339,7 +1339,7 @@ const SECURITY_CONFIG = {
     deleteDelay: 3000, // 3 seconds delay before actual delete
     maxQuestionsPerDay: 50,
     requireAdminForMassDelete: true,
-    adminPassword: "krishi123" // Change this password
+    adminPassword: "2026" // Change this password
 };
 
 // Track deletion attempts
@@ -1396,7 +1396,7 @@ function resetDeletionAttempts() {
 
 // Admin login
 function adminLogin() {
-    const password = prompt("অ্যাডমিন পাসওয়ার্ড দিন: 2025");
+    const password = prompt("অ্যাডমিন পাসওয়ার্ড দিন:");
     if (password === SECURITY_CONFIG.adminPassword) {
         isAdminMode = true;
         localStorage.setItem('isAdminMode', 'true');
@@ -1864,5 +1864,6 @@ function addSecurityCheckButton() {
 </body>
 
 </html>
+
 
 
