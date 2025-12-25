@@ -1859,13 +1859,120 @@ function addSecurityCheckButton() {
     checkBtn.onclick = runSecurityCheck;
     document.body.appendChild(checkBtn);
 }
-    </script>
-</body>
+  // ==================== IMPROVED REPORTING SYSTEM ====================
+
+// 1. Function for users to submit a report
+function reportQuestion(questionId) {
+    const reason = prompt("রিপোর্টের কারণ লিখুন (স্প্যাম, ভুল তথ্য, বা অশ্লীলতা):");
+    
+    if (!reason || reason.trim() === "") {
+        alert("❌ রিপোর্টের কারণ লেখা আবশ্যক।");
+        return;
+    }
+
+    // Get existing reports or initialize empty array
+    const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
+    
+    // Create new report object
+    const newReport = {
+        id: Date.now(),
+        questionId: questionId,
+        reason: reason.trim(),
+        timestamp: new Date().toLocaleString('bn-BD'),
+        status: 'pending'
+    };
+
+    reports.push(newReport);
+    localStorage.setItem('question_reports', JSON.stringify(reports));
+    
+    alert("✅ আপনার রিপোর্ট জমা হয়েছে। অ্যাডমিন এটি পর্যালোচনা করবেন।");
+}
+
+// 2. Function for Admin to view and manage reports
+function showSecurityReport() {
+    if (!isAdminMode) {
+        alert("🚫 এই ফিচারটি শুধুমাত্র অ্যাডমিনদের জন্য।");
+        return;
+    }
+
+    const reports = JSON.parse(localStorage.getItem('question_reports')) || [];
+    const questions = getQuestions(); // Assuming this function exists in your core code
+
+    if (reports.length === 0) {
+        alert("📊 বর্তমানে কোনো রিপোর্ট জমা নেই।");
+        return;
+    }
+
+    // Create a simple Modal Overlay for reports
+    let modalHTML = `
+        <div id="reportModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:20000; display:flex; justify-content:center; align-items:center; font-family: sans-serif;">
+            <div style="background:white; padding:20px; border-radius:10px; width:90%; max-width:500px; max-height:80vh; overflow-y:auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #eee; padding-bottom:10px; margin-bottom:15px;">
+                    <h3 style="margin:0;">🚩 ইউজার রিপোর্ট লিস্ট</h3>
+                    <button onclick="document.getElementById('reportModal').remove()" style="background:#ff4444; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;">&times;</button>
+                </div>
+                <div id="reportList">
+    `;
+
+    reports.forEach((report, index) => {
+        const targetQuestion = questions.find(q => q.id === report.questionId);
+        const questionText = targetQuestion ? targetQuestion.text : "⚠️ প্রশ্নটি ইতিমধ্যে মুছে ফেলা হয়েছে";
+
+        modalHTML += `
+            <div style="background:#f9f9f9; border-left:4px solid #ff9800; padding:10px; margin-bottom:15px; border-radius:4px; font-size:0.9rem;">
+                <p><strong>প্রশ্ন:</strong> ${questionText.substring(0, 60)}...</p>
+                <p><strong>রিপোর্টের কারণ:</strong> <span style="color:#d32f2f;">${report.reason}</span></p>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                    <small>📅 ${report.timestamp}</small>
+                    <div>
+                        <button onclick="dismissReport(${report.id})" style="background:#6c757d; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; margin-right:5px;">খারিজ করুন</button>
+                        ${targetQuestion ? `<button onclick="deleteSingleQuestion(${report.questionId}); dismissReport(${report.id});" style="background:#d32f2f; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">মুছুন</button>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    modalHTML += `
+                </div>
+                <button onclick="clearAllReports()" style="width:100%; margin-top:10px; padding:10px; background:#f44336; color:white; border:none; border-radius:5px; cursor:pointer;">সব রিপোর্ট ক্লিয়ার করুন</button>
+            </div>
+        </div>
+    `;
+
+    // Append modal to body
+    const div = document.createElement('div');
+    div.id = "modalContainer";
+    div.innerHTML = modalHTML;
+    document.body.appendChild(div);
+}
+
+// 3. Helper to remove a specific report
+function dismissReport(reportId) {
+    let reports = JSON.parse(localStorage.getItem('question_reports')) || [];
+    reports = reports.filter(r => r.id !== reportId);
+    localStorage.setItem('question_reports', JSON.stringify(reports));
+    
+    // Refresh the UI
+    const modal = document.getElementById('modalContainer');
+    if (modal) modal.remove();
+    showSecurityReport();
+}
+
+// 4. Helper to clear all reports
+function clearAllReports() {
+    if (confirm("আপনি কি সব রিপোর্ট মুছে ফেলতে চান?")) {
+        localStorage.removeItem('question_reports');
+        document.getElementById('modalContainer').remove();
+        alert("✅ সব রিপোর্ট ক্লিয়ার করা হয়েছে।");
+    }
+}
 
     </script>
 </body>
 
 </html>
+
 
 
 
