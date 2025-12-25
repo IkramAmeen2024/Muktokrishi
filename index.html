@@ -1350,10 +1350,42 @@ function forceDelete(questionId) {
     alert("ডিলেট হয়েছে!");
     location.reload();
 }
+        // Keyboard Shortcuts for Admin
+document.addEventListener('keydown', function(event) {
+    // Ctrl + Alt + A = Admin ON
+    if (event.ctrlKey && event.altKey && event.key === 'a') {
+        localStorage.setItem('isAdminMode', 'true');
+        alert('✅ Admin mode ON!');
+        location.reload();
+    }
+    
+    // Ctrl + Alt + R = Reset All
+    if (event.ctrlKey && event.altKey && event.key === 'r') {
+        if (confirm('সব ডেটা রিসেট করতে চান?')) {
+            localStorage.clear();
+            alert('🧹 সব ডেটা রিসেট!');
+            location.reload();
+        }
+    }
+    
+    // Ctrl + Alt + P = Show Password
+    if (event.ctrlKey && event.altKey && event.key === 'p') {
+        alert('🔑 Admin Password: 2026');
+    }
+});
+
+// Show help on load
+setTimeout(function() {
+    console.log('🔧 Admin Shortcuts:');
+    console.log('1. Ctrl+Alt+A = Admin ON');
+    console.log('2. Ctrl+Alt+R = Reset All');
+    console.log('3. Ctrl+Alt+P = Show Password');
+}, 2000);
     </script>
 </body>
 
 </html>
+
 
 
 
